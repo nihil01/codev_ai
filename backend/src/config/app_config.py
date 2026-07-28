@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     JWT_SECRET: str = os.getenv("JWT_SECRET", "")
 
+    # Codev is a single-owner application. Credentials are provisioned only
+    # through the environment and never receive source-controlled defaults.
+    single_user_email: str = os.getenv("SINGLE_USER_EMAIL", "")
+    single_user_password: str = os.getenv("SINGLE_USER_PASSWORD", "")
+    single_user_display_name: str = os.getenv("SINGLE_USER_DISPLAY_NAME", "Codev")
+
     zernio_api_key: str = os.getenv("ZERNIO_API_KEY", os.getenv("ZERNIO_KEY", ""))
     zernio_webhook_secret: str = os.getenv("ZERNIO_WEBHOOK_SEC", "")
 

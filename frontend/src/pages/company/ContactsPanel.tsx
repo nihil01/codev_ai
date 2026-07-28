@@ -18,9 +18,9 @@ function formatDate(value?: string | null) {
 }
 
 function segmentLabel(segment: string) {
-  if (segment === 'customer') return 'Customer';
-  if (segment === 'hot') return 'Hot lead';
-  return 'Lead';
+  if (segment === 'customer') return 'Müştəri';
+  if (segment === 'hot') return 'Prioritet müraciət';
+  return 'Müraciət';
 }
 
 function channelBadge(channel: Contact['channel']) {
@@ -58,8 +58,8 @@ export function ContactsPanel({ companyId, onError }: ContactsPanelProps) {
             <div className="flex items-center gap-3">
               <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]"><UsersRound size={24} /></span>
               <div>
-                <h2 className="text-2xl font-light tracking-[-0.02em] text-[#0f3e17]">Contacts</h2>
-                <p className="mt-1 text-sm text-[#222222]">{totals.all} contacts in your workspace · {totals.customers} customers · {totals.hot} hot leads</p>
+                <h2 className="text-2xl font-light tracking-[-0.02em] text-[#0f3e17]">Kontaktlar</h2>
+                <p className="mt-1 text-sm text-[#222222]">İş məkanında {totals.all} kontakt · {totals.customers} müştəri · {totals.hot} prioritet müraciət</p>
               </div>
             </div>
           </div>
@@ -69,17 +69,17 @@ export function ContactsPanel({ companyId, onError }: ContactsPanelProps) {
               <input
                 className={`${inputClass} pl-10`}
                 value={query}
-                placeholder="Search by name, phone, username or ID..."
+                placeholder="Ad, telefon, istifadəçi adı və ya ID ilə axtar..."
                 onChange={(event) => setQuery(event.target.value)}
               />
             </label>
             <label className="relative block">
               <Filter className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#222222]" size={18} />
               <select className={`${inputClass} pl-10`} value={segment} onChange={(event) => setSegment(event.target.value as SegmentFilter)}>
-                <option value="all">All segments</option>
-                <option value="lead">Leads</option>
-                <option value="hot">Hot leads</option>
-                <option value="customer">Customers</option>
+                <option value="all">Bütün seqmentlər</option>
+                <option value="lead">Müraciətlər</option>
+                <option value="hot">Prioritet müraciətlər</option>
+                <option value="customer">Müştərilər</option>
               </select>
             </label>
           </div>
@@ -88,24 +88,24 @@ export function ContactsPanel({ companyId, onError }: ContactsPanelProps) {
 
       <div className={cardClass}>
         {loading ? (
-          <Spinner label="Loading contacts" />
+          <Spinner label="Kontaktlar yüklənir" />
         ) : contacts.length === 0 ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
             <div className="mb-4 rounded-full bg-[#efeeeb] p-5 text-[#222222]"><UserRound size={42} /></div>
-            <h3 className="text-lg font-light text-[#0f3e17]">No contacts yet</h3>
-            <p className="mt-2 max-w-md text-sm text-[#222222]">Contacts are created automatically from Instagram, WhatsApp and order history once customers start conversations.</p>
+            <h3 className="text-lg font-light text-[#0f3e17]">Hələ kontakt yoxdur</h3>
+            <p className="mt-2 max-w-md text-sm text-[#222222]">Müştərilər yazışmağa başladıqda kontaktlar Instagram, WhatsApp və müraciət tarixçəsindən avtomatik yaradılacaq.</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-[14px] border border-[#efeeeb]">
             <table className="min-w-full divide-y divide-[#efeeeb] text-sm">
               <thead className="bg-[#e1f4df] text-left text-xs uppercase tracking-[0.08em] text-[#222222]">
                 <tr>
-                  <th className="px-4 py-3">Contact</th>
-                  <th className="px-4 py-3">Channel</th>
-                  <th className="px-4 py-3">Segment</th>
-                  <th className="px-4 py-3">Orders</th>
-                  <th className="px-4 py-3">Revenue</th>
-                  <th className="px-4 py-3">Last activity</th>
+                  <th className="px-4 py-3">Kontakt</th>
+                  <th className="px-4 py-3">Kanal</th>
+                  <th className="px-4 py-3">Seqment</th>
+                  <th className="px-4 py-3">Müraciətlər</th>
+                  <th className="px-4 py-3">Gəlir</th>
+                  <th className="px-4 py-3">Son aktivlik</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#efeeeb] bg-[#fffefc]">

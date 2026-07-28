@@ -25,6 +25,7 @@ from services.security import (
     RequestSizeLimitMiddleware,
     ALLOWED_ORIGINS,
 )
+from services.single_user import ensure_single_user
 from services.telegram_bot import start_bot, stop_bot
 
 logging.basicConfig(
@@ -74,6 +75,7 @@ async def lifespan(app: FastAPI):
 
     # subprocess.run блокирующий, поэтому выносим в отдельный thread.
     await asyncio.to_thread(run_pyway_migrations)
+    await ensure_single_user()
 
     telegram_application = await start_bot()
     app.state.telegram_application = telegram_application
@@ -97,7 +99,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="ChatSI — AI CRM",
+    title="Codev",
     lifespan=lifespan,
 )
 

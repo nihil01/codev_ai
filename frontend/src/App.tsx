@@ -4,7 +4,6 @@ import type { CurrentUser } from './api';
 import { cardClass } from './constants/styles';
 import { Spinner } from './components/ui/Spinner';
 import { CompanyLogin } from './pages/auth/CompanyLogin';
-import { AdminPanel } from './pages/admin/AdminPanel';
 import { CompanyDashboard } from './pages/company/CompanyDashboard';
 import { resolveAppView } from './services/routePolicy';
 import { clearSession, hasStoredToken, loadStoredUser, saveCurrentUser } from './services/session';
@@ -89,7 +88,5 @@ export default function App() {
     return <CompanyLogin onLogin={handleUserChange} />;
   }
 
-  return user.role === 'admin'
-    ? <AdminPanel user={user} onLogout={handleLogout} />
-    : <CompanyDashboard user={user} onUserChange={handleUserChange} onLogout={handleLogout} />;
+  return <CompanyDashboard user={user} onUserChange={handleUserChange} onLogout={handleLogout} />;
 }
