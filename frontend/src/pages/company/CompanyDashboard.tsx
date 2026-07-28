@@ -359,13 +359,13 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
       onToggleCollapse={() => setCollapsed(!collapsed)}
     >
       {!dashboardReady ? (
-        <div className="rounded-2xl border border-[#e2e4e9] bg-white p-8">
+        <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <Spinner label={t('company.loading')} />
             <div className="grid flex-1 gap-3 sm:grid-cols-3">
-              <div className="h-12 rounded-lg bg-[#f0f4fe]" />
-              <div className="h-12 rounded-lg bg-[#f0f4fe]/60" />
-              <div className="h-12 rounded-lg bg-[#f0f4fe]/30" />
+              <div className="h-12 rounded-[14px] bg-[#e1f4df]" />
+              <div className="h-12 rounded-[14px] bg-[#e1f4df]/60" />
+              <div className="h-12 rounded-[14px] bg-[#e1f4df]/30" />
             </div>
           </div>
         </div>

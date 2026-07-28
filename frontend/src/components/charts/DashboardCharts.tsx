@@ -193,19 +193,19 @@ export function DashboardOverview({
   return (
     <div className="space-y-6">
       {/* Date picker */}
-      <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-[#e2e4e9] bg-white px-6 py-4">
-        <Calendar size={18} className="text-[#696a72]" />
+      <div className="flex flex-wrap items-center gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-6 py-4">
+        <Calendar size={18} className="text-[#222222]" />
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-[#696a72]">{t('overview.dateFrom')}</label>
+          <label className="text-xs font-semibold text-[#222222]">{t('overview.dateFrom')}</label>
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl border border-[#e2e4e9] px-3 py-2 text-sm text-[#020520] outline-none focus:border-[#145aff]" />
+            className="rounded-[14px] border border-[#efeeeb] px-3 py-2 text-sm text-[#0f3e17] outline-none focus:border-[#0f3e17]" />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-[#696a72]">{t('overview.dateTo')}</label>
+          <label className="text-xs font-semibold text-[#222222]">{t('overview.dateTo')}</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl border border-[#e2e4e9] px-3 py-2 text-sm text-[#020520] outline-none focus:border-[#145aff]" />
+            className="rounded-[14px] border border-[#efeeeb] px-3 py-2 text-sm text-[#0f3e17] outline-none focus:border-[#0f3e17]" />
         </div>
-        {loading && <span className="text-xs text-[#696a72]">{t('overview.loading')}</span>}
+        {loading && <span className="text-xs text-[#222222]">{t('overview.loading')}</span>}
       </div>
 
       {/* Top Metrics */}
@@ -227,26 +227,26 @@ export function DashboardOverview({
       <div className="grid gap-6 xl:grid-cols-3">
         {/* Revenue trend line chart */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="xl:col-span-2 rounded-2xl border border-[#e2e4e9] bg-white p-6">
-          <h3 className="text-sm font-semibold text-[#020520]">{t('overview.revenueTrend')}</h3>
-          <p className="mt-1 text-xs text-[#696a72]">{t('overview.revenueTrendDesc')}</p>
+          className="xl:col-span-2 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+          <h3 className="text-sm font-light text-[#0f3e17]">{t('overview.revenueTrend')}</h3>
+          <p className="mt-1 text-xs text-[#222222]">{t('overview.revenueTrendDesc')}</p>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={revenueTrend}>
                 <defs>
                   <linearGradient id="gRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#0f3e17" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#0f3e17" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e9" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#696a72' }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#696a72' }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: '#696a72' }} />
-                <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #e2e4e9', fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#efeeeb" />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#222222' }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: '#222222' }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: '#222222' }} />
+                <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #efeeeb', fontSize: 11 }} />
                 <Legend />
-                <Area yAxisId="left" type="monotone" dataKey="revenue" fill="url(#gRevenue)" stroke="#16a34a" strokeWidth={2} name={t('overview.revenue')} />
-                <Bar yAxisId="right" dataKey="count" fill="#145aff" radius={[3, 3, 0, 0]} name={t('overview.orders')} opacity={0.6} />
+                <Area yAxisId="left" type="monotone" dataKey="revenue" fill="url(#gRevenue)" stroke="#0f3e17" strokeWidth={2} name={t('overview.revenue')} />
+                <Bar yAxisId="right" dataKey="count" fill="#0f3e17" radius={[3, 3, 0, 0]} name={t('overview.orders')} opacity={0.6} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -254,16 +254,16 @@ export function DashboardOverview({
 
         {/* Channel radar */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-          <h3 className="text-sm font-semibold text-[#020520]">{t('overview.channelOverview')}</h3>
-          <p className="mt-1 text-xs text-[#696a72]">{t('overview.channelOverviewDesc')}</p>
+          className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+          <h3 className="text-sm font-light text-[#0f3e17]">{t('overview.channelOverview')}</h3>
+          <p className="mt-1 text-xs text-[#222222]">{t('overview.channelOverviewDesc')}</p>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={channelData}>
-                <PolarGrid stroke="#e2e4e9" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#696a72' }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: '#696a72' }} />
-                <Radar name="Score" dataKey="value" stroke="#145aff" fill="#145aff" fillOpacity={0.25} />
+                <PolarGrid stroke="#efeeeb" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#222222' }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: '#222222' }} />
+                <Radar name="Score" dataKey="value" stroke="#0f3e17" fill="#0f3e17" fillOpacity={0.25} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -274,23 +274,23 @@ export function DashboardOverview({
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Conversations area */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-          <h3 className="text-sm font-semibold text-[#020520]">{t('overview.convosByDay')}</h3>
-          <p className="mt-1 text-xs text-[#696a72]">{t('overview.convosByDayDesc')}</p>
+          className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+          <h3 className="text-sm font-light text-[#0f3e17]">{t('overview.convosByDay')}</h3>
+          <p className="mt-1 text-xs text-[#222222]">{t('overview.convosByDayDesc')}</p>
           <div className="mt-4 h-52">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.conversations}>
                 <defs>
                   <linearGradient id="gConv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#145aff" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#145aff" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#0f3e17" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#0f3e17" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e9" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#696a72' }} />
-                <YAxis tick={{ fontSize: 9, fill: '#696a72' }} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e4e9', fontSize: 10 }} />
-                <Area type="monotone" dataKey="count" stroke="#145aff" fill="url(#gConv)" strokeWidth={2} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#efeeeb" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#222222' }} />
+                <YAxis tick={{ fontSize: 9, fill: '#222222' }} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #efeeeb', fontSize: 10 }} />
+                <Area type="monotone" dataKey="count" stroke="#0f3e17" fill="url(#gConv)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -298,17 +298,17 @@ export function DashboardOverview({
 
         {/* Orders bar */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-          <h3 className="text-sm font-semibold text-[#020520]">{t('overview.ordersByDay')}</h3>
-          <p className="mt-1 text-xs text-[#696a72]">{t('overview.ordersByDayDesc')}</p>
+          className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+          <h3 className="text-sm font-light text-[#0f3e17]">{t('overview.ordersByDay')}</h3>
+          <p className="mt-1 text-xs text-[#222222]">{t('overview.ordersByDayDesc')}</p>
           <div className="mt-4 h-52">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.orders}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e9" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#696a72' }} />
-                <YAxis tick={{ fontSize: 9, fill: '#696a72' }} />
-                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e4e9', fontSize: 10 }} />
-                <Bar dataKey="count" fill="#145aff" radius={[3, 3, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#efeeeb" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#222222' }} />
+                <YAxis tick={{ fontSize: 9, fill: '#222222' }} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #efeeeb', fontSize: 10 }} />
+                <Bar dataKey="count" fill="#0f3e17" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -316,29 +316,29 @@ export function DashboardOverview({
 
         {/* Messages pie */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-          <h3 className="text-sm font-semibold text-[#020520]">{t('overview.chartMessages')}</h3>
-          <p className="mt-1 text-xs text-[#696a72]">{t('overview.chartMessagesDesc')}</p>
+          className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+          <h3 className="text-sm font-light text-[#0f3e17]">{t('overview.chartMessages')}</h3>
+          <p className="mt-1 text-xs text-[#222222]">{t('overview.chartMessagesDesc')}</p>
           <div className="mt-4 flex items-center justify-center">
             <div className="relative">
               <ResponsiveContainer width={160} height={160}>
                 <PieChart>
                   <Pie data={[{ name: t('overview.inbound'), value: data.messages.inbound }, { name: t('overview.outbound'), value: data.messages.outbound }]}
                     cx="50%" cy="50%" innerRadius={42} outerRadius={65} paddingAngle={4} dataKey="value">
-                    <Cell fill="#145aff" />
-                    <Cell fill="#e2e4e9" />
+                    <Cell fill="#0f3e17" />
+                    <Cell fill="#efeeeb" />
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-lg font-semibold text-[#020520]">{data.messages.inbound + data.messages.outbound}</p>
-                <p className="text-[9px] text-[#696a72]">{t('overview.total')}</p>
+                <p className="text-lg font-semibold text-[#0f3e17]">{data.messages.inbound + data.messages.outbound}</p>
+                <p className="text-[9px] text-[#222222]">{t('overview.total')}</p>
               </div>
             </div>
           </div>
           <div className="mt-3 flex justify-center gap-3">
-            <span className="text-[10px] text-[#696a72]">● {t('overview.inbound')}: {data.messages.inbound}</span>
-            <span className="text-[10px] text-[#696a72]">● {t('overview.outbound')}: {data.messages.outbound}</span>
+            <span className="text-[10px] text-[#222222]">● {t('overview.inbound')}: {data.messages.inbound}</span>
+            <span className="text-[10px] text-[#222222]">● {t('overview.outbound')}: {data.messages.outbound}</span>
           </div>
         </motion.div>
       </div>
@@ -346,17 +346,17 @@ export function DashboardOverview({
       {/* Charts Grid 3: Finance + Conversion + Risks */}
       <div className="grid gap-6 lg:grid-cols-3">
         <BarChartBlock title={t('overview.financeChart')} suffix=" ₼" bars={[
-          { label: t('overview.revenue'), value: grossRevenue, color: 'bg-[#16a34a]' },
-          { label: t('overview.costs'), value: totalCosts, color: 'bg-[#d97706]' },
-          { label: t('overview.netProfit'), value: netProfit, color: 'bg-[#145aff]' },
-          { label: t('overview.inventory'), value: inventoryValue, color: 'bg-[#7c3aed]' },
+          { label: t('overview.revenue'), value: grossRevenue, color: 'bg-[#0f3e17]' },
+          { label: t('overview.costs'), value: totalCosts, color: 'bg-[#0f3e17]' },
+          { label: t('overview.netProfit'), value: netProfit, color: 'bg-[#0f3e17]' },
+          { label: t('overview.inventory'), value: inventoryValue, color: 'bg-[#0c2f10]' },
         ]} />
         <DonutBlock title={t('overview.conversionChart')} value={completedOrders} total={totalOrders}
           label={`${completedOrders} ${t('overview.completedOfTotal')} ${totalOrders}`} />
         <BarChartBlock title={t('overview.risksChart')} bars={[
-          { label: t('overview.riskyInventory'), value: (localAnalytics ?? businessAnalytics)?.stale_inventory_items ?? 0, color: 'bg-[#f43f5e]' },
-          { label: t('overview.discountedItems'), value: (localAnalytics ?? businessAnalytics)?.discounted_inventory_items ?? 0, color: 'bg-[#f97316]' },
-          { label: t('overview.customReqs'), value: (localAnalytics ?? businessAnalytics)?.custom_requests ?? 0, color: 'bg-[#14b8a6]' },
+          { label: t('overview.riskyInventory'), value: (localAnalytics ?? businessAnalytics)?.stale_inventory_items ?? 0, color: 'bg-[#b1dbb8]' },
+          { label: t('overview.discountedItems'), value: (localAnalytics ?? businessAnalytics)?.discounted_inventory_items ?? 0, color: 'bg-[#b6ced5]' },
+          { label: t('overview.customReqs'), value: (localAnalytics ?? businessAnalytics)?.custom_requests ?? 0, color: 'bg-[#cfe7d3]' },
         ]} />
       </div>
 
@@ -384,10 +384,10 @@ export function DashboardOverview({
 function MetricCard({ label, value, helper }: { label: string; value: string | number; helper?: string }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-[#e2e4e9] bg-white p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#696a72]">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-[#020520]">{value}</p>
-      {helper && <p className="mt-1 text-[10px] text-[#696a72]">{helper}</p>}
+      className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#222222]">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-[#0f3e17]">{value}</p>
+      {helper && <p className="mt-1 text-[10px] text-[#222222]">{helper}</p>}
     </motion.div>
   );
 }
@@ -396,16 +396,16 @@ function BarChartBlock({ title, bars, suffix = '' }: { title: string; bars: Arra
   const max = Math.max(...bars.map((b) => b.value), 1);
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-      <h3 className="text-sm font-semibold text-[#020520]">{title}</h3>
+      className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+      <h3 className="text-sm font-light text-[#0f3e17]">{title}</h3>
       <div className="mt-4 space-y-3">
         {bars.map((bar) => (
           <div key={bar.label}>
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-[#696a72]">{bar.label}</span>
-              <span className="font-semibold text-[#020520]">{bar.value}{suffix}</span>
+              <span className="font-medium text-[#222222]">{bar.label}</span>
+              <span className="font-semibold text-[#0f3e17]">{bar.value}{suffix}</span>
             </div>
-            <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-[#f0f4fe]">
+            <div className="mt-1 h-2.5 overflow-hidden rounded-full bg-[#e1f4df]">
               <motion.div initial={{ width: 0 }} animate={{ width: `${Math.max((bar.value / max) * 100, 2)}%` }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className={`h-full rounded-full ${bar.color}`} />
@@ -424,15 +424,15 @@ function DonutBlock({ title, value, total, label }: { title: string; value: numb
   const dash = (percent / 100) * circumference;
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-[#e2e4e9] bg-white p-6 flex items-center justify-between gap-6">
+      className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6 flex items-center justify-between gap-6">
       <div>
-        <h3 className="text-sm font-semibold text-[#020520]">{title}</h3>
-        <p className="mt-2 text-xs text-[#696a72]">{label}</p>
-        <p className="mt-3 text-3xl font-semibold text-[#020520]">{percent.toFixed(1)}%</p>
+        <h3 className="text-sm font-light text-[#0f3e17]">{title}</h3>
+        <p className="mt-2 text-xs text-[#222222]">{label}</p>
+        <p className="mt-3 text-3xl font-semibold text-[#0f3e17]">{percent.toFixed(1)}%</p>
       </div>
       <svg viewBox="0 0 110 110" className="h-28 w-28 shrink-0 -rotate-90">
-        <circle cx="55" cy="55" r="44" fill="none" stroke="#e2e4e9" strokeWidth="14" />
-        <motion.circle cx="55" cy="55" r="44" fill="none" stroke="#145aff" strokeWidth="14" strokeLinecap="round"
+        <circle cx="55" cy="55" r="44" fill="none" stroke="#efeeeb" strokeWidth="14" />
+        <motion.circle cx="55" cy="55" r="44" fill="none" stroke="#0f3e17" strokeWidth="14" strokeLinecap="round"
           strokeDasharray={`${dash} ${circumference - dash}`}
           initial={{ strokeDasharray: `0 ${circumference}` }}
           animate={{ strokeDasharray: `${dash} ${circumference - dash}` }}
@@ -445,19 +445,19 @@ function DonutBlock({ title, value, total, label }: { title: string; value: numb
 function RankingCard({ title, emptyLabel, rows }: { title: string; emptyLabel: string; rows: Array<{ label: string; meta: string; value: string }> }) {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-[#e2e4e9] bg-white p-6">
-      <h3 className="text-sm font-semibold text-[#020520]">{title}</h3>
+      className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-6">
+      <h3 className="text-sm font-light text-[#0f3e17]">{title}</h3>
       {rows.length === 0 ? (
-        <p className="mt-4 text-xs text-[#696a72]">{emptyLabel}</p>
+        <p className="mt-4 text-xs text-[#222222]">{emptyLabel}</p>
       ) : (
         <div className="mt-4 space-y-2">
           {rows.slice(0, 5).map((row, i) => (
-            <div key={`${row.label}-${i}`} className="flex items-center justify-between gap-4 rounded-lg border border-[#e2e4e9] bg-[#f9fafb] px-4 py-3">
+            <div key={`${row.label}-${i}`} className="flex items-center justify-between gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-4 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#020520]">#{i + 1} {row.label}</p>
-                <p className="text-[10px] text-[#696a72]">{row.meta}</p>
+                <p className="truncate text-sm font-semibold text-[#0f3e17]">#{i + 1} {row.label}</p>
+                <p className="text-[10px] text-[#222222]">{row.meta}</p>
               </div>
-              <p className="shrink-0 text-sm font-semibold text-[#020520]">{row.value}</p>
+              <p className="shrink-0 text-sm font-semibold text-[#0f3e17]">{row.value}</p>
             </div>
           ))}
         </div>

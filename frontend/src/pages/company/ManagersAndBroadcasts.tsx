@@ -161,7 +161,7 @@ export function ManagersAndBroadcasts({
 
   if (loading) {
     return (
-        <section className={`${cardClass} text-[#696a72]`}>
+        <section className={`${cardClass} text-[#222222]`}>
           <Spinner label={t('managers.loading')} />
         </section>
     );
@@ -171,10 +171,10 @@ export function ManagersAndBroadcasts({
       <section className={`${cardClass} space-y-6`}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#145aff]">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#0f3e17]">
               {t('managers.eyebrow')}
             </p>
-            <h2 className="mt-2 text-2xl font-semibold text-[#020520]">
+            <h2 className="mt-2 text-2xl font-light text-[#0f3e17]">
               {t('managers.title')}
             </h2>
           </div>
@@ -184,7 +184,7 @@ export function ManagersAndBroadcasts({
                 type="button"
                 onClick={() => void loadManagers()}
                 disabled={!companyId || loading || openingTelegram}
-                className="rounded-xl border border-[#e2e4e9] bg-white px-5 py-3 text-sm font-semibold text-[#696a72] transition hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-5 py-3 text-sm font-semibold text-[#222222] transition hover:bg-[#e1f4df] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {t('managers.refresh')}
             </button>
@@ -193,7 +193,7 @@ export function ManagersAndBroadcasts({
                 type="button"
                 onClick={addManagerViaTelegram}
                 disabled={!companyId || openingTelegram}
-                className="rounded-xl bg-[#145aff] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1249e0] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-[14px] bg-[#0f3e17] px-5 py-3 text-sm font-semibold text-[#fffefc] transition hover:bg-[#0c2f10] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {openingTelegram ? t('managers.opening') : t('managers.addViaTelegram')}
             </button>
@@ -201,13 +201,13 @@ export function ManagersAndBroadcasts({
         </div>
 
         {!companyId && (
-            <div className="rounded-lg border border-[#e2e4e9] bg-[#fffbeb] p-4 text-sm leading-6 text-[#020520]">
+            <div className="rounded-[14px] border border-[#efeeeb] bg-[#b1dbb8] p-4 text-sm leading-6 text-[#0f3e17]">
               {t('managers.noCompany')}
             </div>
         )}
 
         {managers.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#e2e4e9] bg-white p-6 text-sm leading-6 text-[#696a72]">
+            <div className="rounded-[14px] border border-dashed border-[#efeeeb] bg-[#fffefc] p-6 text-sm leading-6 text-[#222222]">
               {t('managers.empty')}
             </div>
         ) : (
@@ -219,22 +219,22 @@ export function ManagersAndBroadcasts({
                 return (
                     <article
                         key={manager.id}
-                        className="rounded-lg border border-[#e2e4e9] bg-white p-4"
+                        className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4"
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-base font-semibold text-[#020520]">
+                            <h3 className="text-base font-light text-[#0f3e17]">
                               {manager.display_name}
                             </h3>
-                            <span className="rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold text-[#145aff]">
+                            <span className="rounded-full bg-[#b6ced5] px-3 py-1 text-xs font-semibold text-[#0f3e17]">
                         Telegram
                       </span>
                             <span
                                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
                                     manager.is_active
-                                        ? 'bg-[#f0fdf4] text-[#16a34a]'
-                                        : 'bg-[#f5f5f5] text-[#696a72]'
+                                        ? 'bg-[#e1f4df] text-[#0f3e17]'
+                                        : 'bg-[#e1f4df] text-[#222222]'
                                 }`}
                             >
                         {manager.is_active
@@ -247,11 +247,11 @@ export function ManagersAndBroadcasts({
                      * recipient_id is the Telegram chat ID stored by the
                      * webhook. It is intentionally not displayed in the UI.
                      */}
-                          <p className="mt-2 text-sm text-[#696a72]">
+                          <p className="mt-2 text-sm text-[#222222]">
                             {t('managers.connected')}
                           </p>
                           {formatManagerMeta(manager) && (
-                            <p className="mt-1 break-all text-xs font-semibold text-[#696a72]">
+                            <p className="mt-1 break-all text-xs font-semibold text-[#222222]">
                               {formatManagerMeta(manager)}
                             </p>
                           )}
@@ -262,7 +262,7 @@ export function ManagersAndBroadcasts({
                               type="button"
                               onClick={() => void toggleManager(manager)}
                               disabled={isUpdating || isDeleting}
-                              className="rounded-xl border border-[#e2e4e9] px-4 py-2 text-xs font-semibold text-[#696a72] transition hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-[14px] border border-[#efeeeb] px-4 py-2 text-xs font-semibold text-[#222222] transition hover:bg-[#e1f4df] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isUpdating
                                 ? t('managers.updating')
@@ -275,7 +275,7 @@ export function ManagersAndBroadcasts({
                               type="button"
                               onClick={() => void removeManager(manager)}
                               disabled={isUpdating || isDeleting}
-                              className="rounded-xl border border-[#fecaca] px-4 py-2 text-xs font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="rounded-[14px] border border-[#b6ced5] px-4 py-2 text-xs font-semibold text-[#0c2f10] transition hover:bg-[#b6ced5] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {isDeleting ? t('managers.removing') : t('managers.remove')}
                           </button>

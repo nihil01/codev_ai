@@ -97,16 +97,16 @@ export function TikTokSettings({ companyId, setError, setNotice }: TikTokSetting
       <div className={cardClass}>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-4">
-            <span className="rounded-2xl bg-[#f0f4fe] p-4 text-[#145aff]"><Music2 size={28} /></span>
+            <span className="rounded-[14px] bg-[#e1f4df] p-4 text-[#0f3e17]"><Music2 size={28} /></span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#145aff]">{t('tiktok.eyebrow')}</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-[#020520]">TikTok</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#696a72]">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#0f3e17]">{t('tiktok.eyebrow')}</p>
+              <h2 className="mt-2 text-2xl font-light tracking-[-0.02em] text-[#0f3e17]">TikTok</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#222222]">
                 {t('tiktok.subtitle')}
               </p>
             </div>
           </div>
-          <span className={`rounded-full px-4 py-2 text-sm font-semibold ${connected ? 'bg-emerald-50 text-emerald-700' : 'bg-[#f5f5f5] text-[#696a72]'}`}>
+          <span className={`rounded-full px-4 py-2 text-sm font-semibold ${connected ? 'bg-[#e1f4df] text-[#0f3e17]' : 'bg-[#e1f4df] text-[#222222]'}`}>
             {connected ? t('common.connected') : t('common.notConnected')}
           </span>
         </div>
@@ -117,31 +117,31 @@ export function TikTokSettings({ companyId, setError, setNotice }: TikTokSetting
           <Spinner label={t('tiktok.loading')} />
         ) : (
           <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-            <div className="rounded-2xl border border-[#e2e4e9] bg-[#fcfcfc] p-5">
-              <h3 className="text-lg font-semibold text-[#020520]">{t('tiktok.account')}</h3>
+            <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5">
+              <h3 className="text-lg font-light text-[#0f3e17]">{t('tiktok.account')}</h3>
               <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#696a72]">{t('tiktok.display')}</p>
-                  <p className="mt-1 font-semibold text-[#020520]">{accountLabel}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#222222]">{t('tiktok.display')}</p>
+                  <p className="mt-1 font-semibold text-[#0f3e17]">{accountLabel}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#696a72]">{t('tiktok.connectedAt')}</p>
-                  <p className="mt-1 font-semibold text-[#020520]">{formatDate(integration?.connected_at)}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#222222]">{t('tiktok.connectedAt')}</p>
+                  <p className="mt-1 font-semibold text-[#0f3e17]">{formatDate(integration?.connected_at)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#696a72]">{t('tiktok.zernioAccount')}</p>
-                  <p className="mt-1 break-all font-semibold text-[#020520]">{integration?.zernio_account_id || '—'}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#222222]">{t('tiktok.zernioAccount')}</p>
+                  <p className="mt-1 break-all font-semibold text-[#0f3e17]">{integration?.zernio_account_id || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#696a72]">{t('tiktok.tiktokAccount')}</p>
-                  <p className="mt-1 break-all font-semibold text-[#020520]">{integration?.tiktok_account_id || '—'}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#222222]">{t('tiktok.tiktokAccount')}</p>
+                  <p className="mt-1 break-all font-semibold text-[#0f3e17]">{integration?.tiktok_account_id || '—'}</p>
                 </div>
               </div>
               {!connected && <Alert type="info">{t('tiktok.connectHint')}</Alert>}
             </div>
 
-            <div className="rounded-2xl border border-[#e2e4e9] bg-white p-5">
-              <h3 className="text-lg font-semibold text-[#020520]">{t('tiktok.actions')}</h3>
+            <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5">
+              <h3 className="text-lg font-light text-[#0f3e17]">{t('tiktok.actions')}</h3>
               <div className="mt-4 grid gap-3">
                 <button type="button" onClick={connectTikTok} disabled={connecting || !companyId} className={primaryButtonClass}>
                   {connecting ? t('tiktok.openingOAuth') : connected ? t('tiktok.reconnect') : t('tiktok.connect')}
@@ -150,7 +150,7 @@ export function TikTokSettings({ companyId, setError, setNotice }: TikTokSetting
                   <RefreshCw size={16} /> {t('tiktok.refresh')}
                 </button>
                 {connected && (
-                  <button type="button" onClick={disconnectTikTok} disabled={disconnecting || !companyId} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#fecaca] bg-[#fff5f5] px-5 py-3 text-sm font-semibold text-[#b91c1c] transition hover:bg-[#fef2f2] disabled:opacity-50">
+                  <button type="button" onClick={disconnectTikTok} disabled={disconnecting || !companyId} className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#b6ced5] bg-[#b6ced5] px-5 py-3 text-sm font-semibold text-[#0c2f10] transition hover:bg-[#b6ced5] disabled:opacity-50">
                     <Unplug size={16} /> {disconnecting ? t('tiktok.disconnecting') : t('tiktok.disconnect')}
                   </button>
                 )}

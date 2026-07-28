@@ -75,8 +75,8 @@ export default function App() {
 
   if (booting) {
     return (
-      <main className="grid min-h-screen place-items-center bg-[#fcfcfc]">
-        <div className="rounded-2xl border border-[#e2e4e9] bg-white p-8">
+      <main className="grid min-h-screen place-items-center bg-[#fffefc]">
+        <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-8">
           <Spinner label={t('app.loadingSession')} />
         </div>
       </main>

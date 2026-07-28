@@ -148,15 +148,15 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
     <section className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`${cardClass} space-y-4`}>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#145aff]">Knowledge Base</p>
-          <h2 className="mt-2 text-2xl font-semibold text-[#020520]">{t('knowledge.title')}</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3e17]">Knowledge Base</p>
+          <h2 className="mt-2 text-2xl font-light text-[#0f3e17]">{t('knowledge.title')}</h2>
         </div>
       </motion.div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <motion.form initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} onSubmit={saveTextEntry} className={`${cardClass} space-y-4`}>
           <div>
-            <h3 className="text-lg font-semibold text-[#020520]">{t('knowledge.addTextTitle')}</h3>
+            <h3 className="text-lg font-light text-[#0f3e17]">{t('knowledge.addTextTitle')}</h3>
           </div>
 
           <Field label={t('knowledge.titleField')}>
@@ -182,7 +182,7 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
 
         <motion.form initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} onSubmit={uploadPhoto} className={`${cardClass} space-y-4`}>
           <div>
-            <h3 className="text-lg font-semibold text-[#020520]">{t('knowledge.uploadTitle')}</h3>
+            <h3 className="text-lg font-light text-[#0f3e17]">{t('knowledge.uploadTitle')}</h3>
           </div>
 
           <Field label={t('knowledge.productName')}>
@@ -192,7 +192,7 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
           <Field label={t('knowledge.price')}>
             <div className="relative">
               <input type="number" min="0" step="0.01" value={photoPrice} onChange={(event) => setPhotoPrice(event.target.value)} placeholder={t('common.example45')} className={`${inputClass} pr-16`} />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#696a72]">AZN</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#222222]">AZN</span>
             </div>
           </Field>
 
@@ -200,11 +200,11 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
             <input type="number" min="0" step="1" value={photoQuantity} onChange={(event) => setPhotoQuantity(event.target.value)} placeholder={t('knowledge.quantityPlaceholder')} className={inputClass} />
           </Field>
 
-          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-[#e2e4e9] bg-[#fcfcfc] px-4 py-3 text-sm font-semibold text-[#696a72] transition hover:border-[#145aff]">
+          <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-4 py-3 text-sm font-semibold text-[#222222] transition hover:border-[#0f3e17]">
             <span>
-              <span className="block font-semibold text-[#020520]">{t('knowledge.deliveryAvailable')}</span>
+              <span className="block font-semibold text-[#0f3e17]">{t('knowledge.deliveryAvailable')}</span>
             </span>
-            <input type="checkbox" checked={photoDeliveryAvailable} onChange={(event) => setPhotoDeliveryAvailable(event.currentTarget.checked)} className="h-5 w-5 rounded border-[#e2e4e9] text-[#145aff] focus:ring-[#145aff]" />
+            <input type="checkbox" checked={photoDeliveryAvailable} onChange={(event) => setPhotoDeliveryAvailable(event.currentTarget.checked)} className="h-5 w-5 rounded border-[#efeeeb] text-[#0f3e17] focus:ring-[#0f3e17]" />
           </label>
 
           <Field label={t('knowledge.descriptionLanguage')}>
@@ -220,7 +220,7 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
           </Field>
 
           <Field label={t('knowledge.photo')}>
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPhotoFile(event.target.files?.[0] ?? null)} required className="w-full rounded-xl border border-dashed border-[#e2e4e9] bg-[#fcfcfc] px-4 py-6 text-sm text-[#696a72] outline-none transition file:mr-4 file:rounded-xl file:border-0 file:bg-[#145aff] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:border-[#145aff]" />
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPhotoFile(event.target.files?.[0] ?? null)} required className="w-full rounded-[14px] border border-dashed border-[#efeeeb] bg-[#fffefc] px-4 py-6 text-sm text-[#222222] outline-none transition file:mr-4 file:rounded-[14px] file:border-0 file:bg-[#0f3e17] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#fffefc] hover:border-[#0f3e17]" />
           </Field>
 
           {photoFile && <Alert type="info">{t('common.selected')}: {photoFile.name}. {t('common.maxSize')}</Alert>}
@@ -234,12 +234,12 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`${cardClass} space-y-4`}>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-[#020520]">{t('knowledge.recordsTitle')}</h3>
+            <h3 className="text-lg font-light text-[#0f3e17]">{t('knowledge.recordsTitle')}</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#f0f4fe] px-3 py-1 text-xs font-semibold text-[#696a72]">{entries.length} {t('knowledge.recordsCount')}</span>
+            <span className="rounded-full bg-[#e1f4df] px-3 py-1 text-xs font-semibold text-[#222222]">{entries.length} {t('knowledge.recordsCount')}</span>
             {sortedEntries.length > pageSize && (
-              <span className="rounded-full bg-[#f5f5f5] px-3 py-1 text-xs font-semibold text-[#696a72]">Page {page} / {totalPages}</span>
+              <span className="rounded-full bg-[#e1f4df] px-3 py-1 text-xs font-semibold text-[#222222]">Page {page} / {totalPages}</span>
             )}
           </div>
         </div>
@@ -251,24 +251,24 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
         ) : (
           <div className="grid gap-4">
             {pagedEntries.map((entry) => (
-              <motion.article key={entry.id} layout className="rounded-lg border border-[#e2e4e9] bg-white p-4 transition hover:shadow-sm">
+              <motion.article key={entry.id} layout className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4 transition ">
                 <div className="flex flex-col gap-4 lg:flex-row">
-                  {entry.image_url && <img src={resolveImageUrl(entry.image_url)} alt={entry.title} className="h-36 w-full rounded-lg object-cover lg:w-44" />}
+                  {entry.image_url && <img src={resolveImageUrl(entry.image_url)} alt={entry.title} className="h-36 w-full rounded-[14px] object-cover lg:w-44" />}
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <span className="rounded-full bg-[#f0f4fe] px-3 py-1 text-xs font-semibold text-[#145aff]">{entryTypeLabel(entry.entry_type, t)}</span>
-                        <h4 className="mt-2 text-base font-semibold text-[#020520]">{entry.title}</h4>
+                        <span className="rounded-full bg-[#e1f4df] px-3 py-1 text-xs font-semibold text-[#0f3e17]">{entryTypeLabel(entry.entry_type, t)}</span>
+                        <h4 className="mt-2 text-base font-light text-[#0f3e17]">{entry.title}</h4>
                         {entry.quantity_available !== null && entry.quantity_available !== undefined && (
-                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#696a72]">{t('knowledge.stock')}: {entry.quantity_available}</p>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#222222]">{t('knowledge.stock')}: {entry.quantity_available}</p>
                         )}
                       </div>
                       <button type="button" disabled={deletingId === entry.id} onClick={() => deleteEntry(entry.id)} className={secondaryButtonClass}>
                         {deletingId === entry.id ? t('common.deleting') : t('common.delete')}
                       </button>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-[#696a72]">{entry.content}</p>
-                    {entry.source_url && <a href={entry.source_url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#145aff] hover:opacity-80">{t('common.source')}</a>}
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-[#222222]">{entry.content}</p>
+                    {entry.source_url && <a href={entry.source_url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#0f3e17] hover:opacity-80">{t('common.source')}</a>}
                   </div>
                 </div>
               </motion.article>
@@ -277,8 +277,8 @@ export function KnowledgeBase({ companyId, entries, setEntries, loading, setErro
         )}
 
         {!loading && sortedEntries.length > pageSize && (
-          <div className="flex flex-col gap-3 border-t border-[#e2e4e9] pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[#696a72]">
+          <div className="flex flex-col gap-3 border-t border-[#efeeeb] pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[#222222]">
               Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sortedEntries.length)} of {sortedEntries.length}
             </p>
             <div className="flex gap-2">

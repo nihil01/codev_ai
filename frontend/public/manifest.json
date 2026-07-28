@@ -4,8 +4,8 @@
   "description": "Kurs platforması üçün sosial media və müştəri əlaqələri idarəetməsi",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fcfcfc",
-  "theme_color": "#145aff",
+  "background_color": "#fffefc",
+  "theme_color": "#0f3e17",
   "orientation": "any",
   "icons": [
     {

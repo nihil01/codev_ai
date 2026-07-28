@@ -148,12 +148,12 @@ export function WhatsAppSettings({ companyId, onActivationChange }: WhatsappProp
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-[#020520]">{t('whatsapp.title')}</h2>
+          <h2 className="text-xl font-light text-[#0f3e17]">{t('whatsapp.title')}</h2>
         </div>
 
         <span
           className={`w-fit rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
-            connected ? 'bg-[#f0fdf4] text-[#16a34a]' : 'bg-[#fffbeb] text-[#d97706]'
+            connected ? 'bg-[#e1f4df] text-[#0f3e17]' : 'bg-[#b1dbb8] text-[#0f3e17]'
           }`}
         >
           {connected ? t('whatsapp.connected') : t('whatsapp.notConnected')}
@@ -163,30 +163,30 @@ export function WhatsAppSettings({ companyId, onActivationChange }: WhatsappProp
       {error && <Alert type="error">{error}</Alert>}
       {notice && <Alert type="success">{notice}</Alert>}
 
-      <div className="mt-5 rounded-lg border border-[#e2e4e9] bg-[#fcfcfc] p-5">
-        <div className="grid gap-3 text-sm text-[#696a72] sm:grid-cols-3">
+      <div className="mt-5 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5">
+        <div className="grid gap-3 text-sm text-[#222222] sm:grid-cols-3">
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#696a72]">{t('common.status')}</span>
-            <span className="mt-1 block font-semibold text-[#020520]">
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('common.status')}</span>
+            <span className="mt-1 block font-semibold text-[#0f3e17]">
               {loading ? t('whatsapp.checking') : connected ? t('whatsapp.connectedStatus') : t('common.notConnected')}
             </span>
           </div>
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#696a72]">{t('whatsapp.account')}</span>
-            <span className="mt-1 block break-all font-semibold text-[#020520]">{connectedLabel(integration, t('common.notConnected'))}</span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('whatsapp.account')}</span>
+            <span className="mt-1 block break-all font-semibold text-[#0f3e17]">{connectedLabel(integration, t('common.notConnected'))}</span>
           </div>
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#696a72]">{t('whatsapp.accountId')}</span>
-            <span className="mt-1 block break-all font-semibold text-[#020520]">{integration?.waba_id || '—'}</span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('whatsapp.accountId')}</span>
+            <span className="mt-1 block break-all font-semibold text-[#0f3e17]">{integration?.waba_id || '—'}</span>
           </div>
         </div>
       </div>
 
       {!connected && (
-        <div className="mt-5 rounded-lg border border-[#e2e4e9] bg-[#fffbeb] p-5 text-[#020520]">
-          <h3 className="text-lg font-semibold">{t('whatsapp.missingTitle')}</h3>
+        <div className="mt-5 rounded-[14px] border border-[#efeeeb] bg-[#b1dbb8] p-5 text-[#0f3e17]">
+          <h3 className="text-lg font-light">{t('whatsapp.missingTitle')}</h3>
 
           <button
             type="button"
@@ -200,9 +200,9 @@ export function WhatsAppSettings({ companyId, onActivationChange }: WhatsappProp
       )}
 
       {connected && (
-        <div className="mt-5 grid gap-4 rounded-lg border border-[#e2e4e9] bg-white p-5 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="mt-5 grid gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <h3 className="text-lg font-semibold text-[#020520]">{t('whatsapp.manageTitle')}</h3>
+            <h3 className="text-lg font-light text-[#0f3e17]">{t('whatsapp.manageTitle')}</h3>
           </div>
 
           <button type="button" className={dangerButtonClass} onClick={disconnectWhatsApp} disabled={busy}>

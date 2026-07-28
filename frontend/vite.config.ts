@@ -37,19 +37,17 @@ export default defineConfig({
 
       manifest: {
         id: '/',
-        name: 'AI CRM Bot',
-        short_name: 'CRM Bot',
-        description: 'AI CRM for Instagram and WhatsApp automation',
+        name: 'Codev',
+        short_name: 'Codev',
+        description: 'Kurs platforması üçün sosial media və müştəri əlaqələri idarəetməsi',
 
-        // После установки приложение будет открывать CRM.
-        // Если хочешь сначала лендинг — поставь "/".
-        start_url: '/crm',
+        start_url: '/',
         scope: '/',
 
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#fcfcfc',
-        theme_color: '#145aff',
+        background_color: '#fffefc',
+        theme_color: '#0f3e17',
 
         icons: [
           {

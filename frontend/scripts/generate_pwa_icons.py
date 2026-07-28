@@ -1,131 +1,73 @@
 from __future__ import annotations
 
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
 PUBLIC.mkdir(parents=True, exist_ok=True)
 
-BLUE = (20, 90, 255)
-BLUE_2 = (59, 130, 246)
-INK = (2, 5, 32)
-WHITE = (255, 255, 255)
-SOFT = (240, 244, 254)
-
-
-def load_font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
-    ]
-    for candidate in candidates:
-        if Path(candidate).exists():
-            return ImageFont.truetype(candidate, size=size)
-    return ImageFont.load_default()
-
-
-def rounded_rect(draw: ImageDraw.ImageDraw, xy: tuple[int, int, int, int], radius: int, fill, outline=None, width: int = 1) -> None:
-    draw.rounded_rectangle(xy, radius=radius, fill=fill, outline=outline, width=width)
+CREAM = (255, 254, 252, 255)
+KEYLIME = (225, 244, 223, 255)
+SAGE = (177, 219, 184, 255)
+SLATE = (182, 206, 213, 255)
+FOREST = (15, 62, 23, 255)
 
 
 def make_base(size: int, maskable: bool = False) -> Image.Image:
     scale = size / 512
-    img = Image.new("RGBA", (size, size), SOFT)
+    image = Image.new("RGBA", (size, size), CREAM)
+    draw = ImageDraw.Draw(image)
 
-    # Soft diagonal brand gradient.
-    px = img.load()
-    assert px is not None
-    for y in range(size):
-        for x in range(size):
-            t = (x + y) / (size * 2)
-            r = int(252 * (1 - t) + 232 * t)
-            g = int(252 * (1 - t) + 239 * t)
-            b = int(252 * (1 - t) + 255 * t)
-            px[x, y] = (r, g, b, 255)
-
-    layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-
-    # Background blue glow.
-    glow_margin = int(44 * scale) if maskable else int(24 * scale)
-    d.ellipse(
-        (glow_margin, int(30 * scale), size - glow_margin, size - int(42 * scale)),
-        fill=(20, 90, 255, 38),
+    outer_margin = int((56 if maskable else 34) * scale)
+    outer_radius = int(92 * scale)
+    draw.rounded_rectangle(
+        (outer_margin, outer_margin, size - outer_margin, size - outer_margin),
+        radius=outer_radius,
+        fill=KEYLIME,
     )
-    layer = layer.filter(ImageFilter.GaussianBlur(int(28 * scale)))
-    img.alpha_composite(layer)
 
-    d = ImageDraw.Draw(img)
-
-    # Main app tile. Maskable icon keeps content safely inside center ~70%.
-    margin = int(104 * scale) if maskable else int(62 * scale)
-    tile = (margin, margin, size - margin, size - margin)
-    radius = int((76 if maskable else 86) * scale)
-
-    # Shadow.
-    shadow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle(
-        (tile[0], tile[1] + int(18 * scale), tile[2], tile[3] + int(18 * scale)),
-        radius=radius,
-        fill=(3, 14, 50, 52),
+    line_width = max(2, int(20 * scale))
+    center_x = size // 2
+    draw.line(
+        (center_x, int(390 * scale), center_x, int(205 * scale)),
+        fill=FOREST,
+        width=line_width,
     )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(int(20 * scale)))
-    img.alpha_composite(shadow)
 
-    # Tile gradient.
-    tile_img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    mask = Image.new("L", (size, size), 0)
-    md = ImageDraw.Draw(mask)
-    md.rounded_rectangle(tile, radius=radius, fill=255)
-    tile_px = tile_img.load()
-    assert tile_px is not None
-    for y in range(tile[1], tile[3]):
-        for x in range(tile[0], tile[2]):
-            t = (y - tile[1]) / max(1, (tile[3] - tile[1]))
-            r = int(BLUE_2[0] * (1 - t) + BLUE[0] * t)
-            g = int(BLUE_2[1] * (1 - t) + BLUE[1] * t)
-            b = int(BLUE_2[2] * (1 - t) + BLUE[2] * t)
-            tile_px[x, y] = (r, g, b, 255)
-    tile_img.putalpha(mask)
-    img.alpha_composite(tile_img)
+    left_leaf = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    left_draw = ImageDraw.Draw(left_leaf)
+    left_draw.ellipse(
+        (int(125 * scale), int(105 * scale), int(280 * scale), int(255 * scale)),
+        fill=SAGE,
+        outline=FOREST,
+        width=line_width,
+    )
+    left_leaf = left_leaf.rotate(-28, center=(center_x, center_x), resample=Image.Resampling.BICUBIC)
+    image.alpha_composite(left_leaf)
 
-    # CRM chat bubble motif.
-    bubble_w = int(188 * scale) if maskable else int(230 * scale)
-    bubble_h = int(132 * scale) if maskable else int(160 * scale)
-    bx = size // 2 - bubble_w // 2
-    by = size // 2 - bubble_h // 2 - int(8 * scale)
-    rounded_rect(d, (bx, by, bx + bubble_w, by + bubble_h), int(38 * scale), WHITE)
+    right_leaf = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    right_draw = ImageDraw.Draw(right_leaf)
+    right_draw.ellipse(
+        (int(235 * scale), int(155 * scale), int(390 * scale), int(305 * scale)),
+        fill=SLATE,
+        outline=FOREST,
+        width=line_width,
+    )
+    right_leaf = right_leaf.rotate(28, center=(center_x, center_x), resample=Image.Resampling.BICUBIC)
+    image.alpha_composite(right_leaf)
 
-    # Chat tail.
-    tail = [
-        (bx + int(62 * scale), by + bubble_h - int(6 * scale)),
-        (bx + int(42 * scale), by + bubble_h + int(42 * scale)),
-        (bx + int(100 * scale), by + bubble_h - int(12 * scale)),
-    ]
-    d.polygon(tail, fill=WHITE)
-
-    # AI text.
-    font = load_font(int((86 if maskable else 104) * scale), bold=True)
-    text = "AI"
-    bbox = d.textbbox((0, 0), text, font=font)
-    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    d.text((size // 2 - tw // 2, by + bubble_h // 2 - th // 2 - int(5 * scale)), text, font=font, fill=BLUE)
-
-    # Small CRM dots.
-    dot_y = by + bubble_h + int(56 * scale)
-    dot_r = int(9 * scale)
-    for dx, alpha in [(-34, 220), (0, 255), (34, 220)]:
-        cx = size // 2 + int(dx * scale)
-        d.ellipse((cx - dot_r, dot_y - dot_r, cx + dot_r, dot_y + dot_r), fill=(255, 255, 255, alpha))
-
-    return img
+    draw = ImageDraw.Draw(image)
+    draw.line(
+        (int(190 * scale), int(405 * scale), int(322 * scale), int(405 * scale)),
+        fill=FOREST,
+        width=line_width,
+    )
+    return image
 
 
 def save_png(path: Path, size: int, maskable: bool = False) -> None:
-    img = make_base(size, maskable=maskable)
-    img.save(path, "PNG", optimize=True)
+    make_base(size, maskable=maskable).save(path, "PNG", optimize=True)
 
 
 save_png(PUBLIC / "pwa-192x192.png", 192)
@@ -133,16 +75,19 @@ save_png(PUBLIC / "pwa-512x512.png", 512)
 save_png(PUBLIC / "pwa-maskable-512x512.png", 512, maskable=True)
 save_png(PUBLIC / "apple-touch-icon.png", 180)
 
-# Multi-size favicon.ico for browsers.
 favicon_sizes = [16, 32, 48]
-favicon_images = [make_base(size).convert("RGBA") for size in favicon_sizes]
-favicon_images[0].save(PUBLIC / "favicon.ico", sizes=[(s, s) for s in favicon_sizes], append_images=favicon_images[1:])
+favicon_images = [make_base(size) for size in favicon_sizes]
+favicon_images[0].save(
+    PUBLIC / "favicon.ico",
+    sizes=[(size, size) for size in favicon_sizes],
+    append_images=favicon_images[1:],
+)
 
-for file in [
+for filename in (
     "pwa-192x192.png",
     "pwa-512x512.png",
     "pwa-maskable-512x512.png",
     "apple-touch-icon.png",
     "favicon.ico",
-]:
-    print(PUBLIC / file)
+):
+    print(PUBLIC / filename)

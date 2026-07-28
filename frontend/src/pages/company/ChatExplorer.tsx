@@ -57,7 +57,7 @@ function channelLabel(channel: Conversation['channel']) {
 }
 
 function channelBadgeClass(channel: Conversation['channel']) {
-  return channel === 'whatsapp' ? 'bg-emerald-50 text-emerald-700' : 'bg-fuchsia-50 text-fuchsia-700';
+  return channel === 'whatsapp' ? 'bg-[#e1f4df] text-[#0f3e17]' : 'bg-fuchsia-50 text-fuchsia-700';
 }
 
 function modeLabel(mode: Conversation['mode']) {
@@ -66,9 +66,9 @@ function modeLabel(mode: Conversation['mode']) {
 }
 
 function modeBadgeClass(mode: Conversation['mode']) {
-  if (mode === 'human') return 'bg-orange-50 text-orange-700';
-  if (mode === 'paused') return 'bg-amber-50 text-amber-700';
-  if (mode === 'closed') return 'bg-slate-100 text-slate-500';
+  if (mode === 'human') return 'bg-[#b1dbb8] text-[#0f3e17]';
+  if (mode === 'paused') return 'bg-[#b1dbb8] text-[#0f3e17]';
+  if (mode === 'closed') return 'bg-[#b6ced5] text-[#222222]';
   return 'bg-sky-50 text-sky-700';
 }
 
@@ -238,10 +238,10 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`${cardClass} space-y-5`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#145aff]">{t('chat.eyebrow')}</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[#020520]">{t('chat.title')}</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#0f3e17]">{t('chat.eyebrow')}</p>
+            <h2 className="mt-2 text-2xl font-light text-[#0f3e17]">{t('chat.title')}</h2>
           </div>
-          <div className="rounded-lg border border-[#e2e4e9] bg-white px-4 py-3 text-sm font-semibold text-[#696a72]">
+          <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-4 py-3 text-sm font-semibold text-[#222222]">
             {filteredConversations.length} {t('chat.summaryChats')} / {totalMessages} {t('chat.summaryMessages')}
           </div>
         </div>
@@ -297,16 +297,16 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
                     key={conversation.id}
                     type="button"
                     onClick={() => setSelectedId(conversation.id)}
-                    className={`w-full rounded-lg border p-4 text-left transition duration-200 ${
+                    className={`w-full rounded-[14px] border p-4 text-left transition duration-200 ${
                       active
-                        ? 'border-[#145aff] bg-[#f0f4fe]'
-                        : 'border-[#e2e4e9] bg-white hover:border-[#145aff]/40 hover:bg-[#f0f4fe]/50'
+                        ? 'border-[#0f3e17] bg-[#e1f4df]'
+                        : 'border-[#efeeeb] bg-[#fffefc] hover:border-[#0f3e17]/40 hover:bg-[#e1f4df]/50'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate font-semibold text-[#020520]">{customerLabel(conversation)}</p>
+                          <p className="truncate font-semibold text-[#0f3e17]">{customerLabel(conversation)}</p>
                           <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${channelBadgeClass(conversation.channel)}`}>
                             {channelLabel(conversation.channel)}
                           </span>
@@ -314,16 +314,16 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
                             {modeLabel(conversation.mode)}
                           </span>
                         </div>
-                        <p className="mt-1 truncate text-xs text-[#696a72]">{conversation.external_conversation_id}</p>
+                        <p className="mt-1 truncate text-xs text-[#222222]">{conversation.external_conversation_id}</p>
                       </div>
-                      <span className="rounded-full bg-[#f0f4fe] px-3 py-1 text-xs font-semibold text-[#696a72]">
+                      <span className="rounded-full bg-[#e1f4df] px-3 py-1 text-xs font-semibold text-[#222222]">
                         {conversation.messages.length}
                       </span>
                     </div>
-                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#696a72]">
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-[#222222]">
                       {lastMessage?.text || t('chat.noMessages')}
                     </p>
-                    <p className="mt-3 text-xs font-medium text-[#696a72]">{formatDate(conversation.last_message_at || conversation.created_at)} · {t('chat.window')}: {windowLeftLabel(conversation.messaging_window_expires_at)}</p>
+                    <p className="mt-3 text-xs font-medium text-[#222222]">{formatDate(conversation.last_message_at || conversation.created_at)} · {t('chat.window')}: {windowLeftLabel(conversation.messaging_window_expires_at)}</p>
                   </button>
                 );
               })}
@@ -336,9 +336,9 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
             <Alert type="info">{t('chat.selectChat')}</Alert>
           ) : (
             <div className="flex h-full flex-col">
-              <div className="border-b border-[#e2e4e9] pb-4">
+              <div className="border-b border-[#efeeeb] pb-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-xl font-semibold text-[#020520]">{customerLabel(selectedConversation)}</h3>
+                  <h3 className="text-xl font-light text-[#0f3e17]">{customerLabel(selectedConversation)}</h3>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${channelBadgeClass(selectedConversation.channel)}`}>
                     {channelLabel(selectedConversation.channel)}
                   </span>
@@ -346,7 +346,7 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
                     {modeLabel(selectedConversation.mode)}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-[#696a72]">
+                <p className="mt-1 text-sm text-[#222222]">
                   {t('chat.lastActivity')}: {formatDate(selectedConversation.last_message_at || selectedConversation.created_at)} · 24h {t('chat.window')}: {windowLeftLabel(selectedConversation.messaging_window_expires_at)}
                 </p>
                 {windowLeftLabel(selectedConversation.messaging_window_expires_at) === windowClosedLabel && (
@@ -388,14 +388,14 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
                         className={`flex ${outbound ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[78%] rounded-xl px-4 py-3 text-sm leading-6 ${
+                          className={`max-w-[78%] rounded-[14px] px-4 py-3 text-sm leading-6 ${
                             outbound
-                              ? 'bg-[#020520] text-white'
-                              : 'border border-[#e2e4e9] bg-white text-[#020520]'
+                              ? 'bg-[#0f3e17] text-[#fffefc]'
+                              : 'border border-[#efeeeb] bg-[#fffefc] text-[#0f3e17]'
                           }`}
                         >
                           <p className="whitespace-pre-wrap">{message.text || '—'}</p>
-                          <p className={`mt-2 text-[11px] font-medium ${outbound ? 'text-slate-300' : 'text-[#696a72]'}`}>
+                          <p className={`mt-2 text-[11px] font-medium ${outbound ? 'text-[#222222]' : 'text-[#222222]'}`}>
                             {message.sender_type === 'manager' ? t('chat.manager') : outbound ? 'Bot' : t('chat.customer')} · {formatDate(message.created_at)}{message.intent ? ` · ${message.intent}` : ''}
                           </p>
                         </div>
@@ -406,13 +406,13 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
               </div>
 
               <form
-                className="mt-5 rounded-lg border border-[#e2e4e9] bg-[#fcfcfc] p-4"
+                className="mt-5 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4"
                 onSubmit={(event) => {
                   event.preventDefault();
                   void sendManualMessage();
                 }}
               >
-                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#696a72]" htmlFor="manual-chat-message">
+                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#222222]" htmlFor="manual-chat-message">
                   {t('chat.replyLabel')}
                 </label>
                 <textarea
@@ -424,7 +424,7 @@ export function ChatExplorer({ companyId, conversations, setConversations, setEr
                   disabled={sendingMessage || selectedConversation.mode === 'closed'}
                 />
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs font-medium text-[#696a72]">
+                  <p className="text-xs font-medium text-[#222222]">
                     {isMessagingWindowOpen(selectedConversation.messaging_window_expires_at)
                       ? t('chat.replyWindowHint')
                       : t('chat.replyWindowClosedHint')}
