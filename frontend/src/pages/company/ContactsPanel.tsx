@@ -1,0 +1,132 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Filter, Search, UserRound, UsersRound } from 'lucide-react';
+import { api } from '../../api';
+import type { Contact } from '../../api';
+import { cardClass, inputClass } from '../../constants/styles';
+import { Spinner } from '../../components/ui/Spinner';
+
+type ContactsPanelProps = {
+  companyId?: string | null;
+  onError?: (message: string) => void;
+};
+
+type SegmentFilter = 'all' | 'lead' | 'customer' | 'hot';
+
+function formatDate(value?: string | null) {
+  if (!value) return '—';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+}
+
+function segmentLabel(segment: string) {
+  if (segment === 'customer') return 'Customer';
+  if (segment === 'hot') return 'Hot lead';
+  return 'Lead';
+}
+
+function channelBadge(channel: Contact['channel']) {
+  return channel === 'instagram' ? 'Instagram' : 'WhatsApp';
+}
+
+export function ContactsPanel({ companyId, onError }: ContactsPanelProps) {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState('');
+  const [segment, setSegment] = useState<SegmentFilter>('all');
+
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    setLoading(true);
+    api.contacts(companyId, { q: query, segment })
+      .then((items) => { if (!cancelled) setContacts(items); })
+      .catch((err) => { if (!cancelled) onError?.(err instanceof Error ? err.message : String(err)); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [companyId, query, segment]);
+
+  const totals = useMemo(() => ({
+    all: contacts.length,
+    customers: contacts.filter((item) => item.segment === 'customer').length,
+    hot: contacts.filter((item) => item.segment === 'hot').length,
+  }), [contacts]);
+
+  return (
+    <section className="space-y-5">
+      <div className={cardClass}>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="rounded-2xl bg-[#f0f4fe] p-3 text-[#145aff]"><UsersRound size={24} /></span>
+              <div>
+                <h2 className="text-2xl font-semibold tracking-[-0.02em] text-[#020520]">Contacts</h2>
+                <p className="mt-1 text-sm text-[#696a72]">{totals.all} contacts in your workspace · {totals.customers} customers · {totals.hot} hot leads</p>
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[minmax(260px,420px)_180px]">
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0aa]" size={18} />
+              <input
+                className={`${inputClass} pl-10`}
+                value={query}
+                placeholder="Search by name, phone, username or ID..."
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
+            <label className="relative block">
+              <Filter className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0aa]" size={18} />
+              <select className={`${inputClass} pl-10`} value={segment} onChange={(event) => setSegment(event.target.value as SegmentFilter)}>
+                <option value="all">All segments</option>
+                <option value="lead">Leads</option>
+                <option value="hot">Hot leads</option>
+                <option value="customer">Customers</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className={cardClass}>
+        {loading ? (
+          <Spinner label="Loading contacts" />
+        ) : contacts.length === 0 ? (
+          <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+            <div className="mb-4 rounded-full bg-[#f4f6f8] p-5 text-[#9aa0aa]"><UserRound size={42} /></div>
+            <h3 className="text-lg font-semibold text-[#020520]">No contacts yet</h3>
+            <p className="mt-2 max-w-md text-sm text-[#696a72]">Contacts are created automatically from Instagram, WhatsApp and order history once customers start conversations.</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-[#e2e4e9]">
+            <table className="min-w-full divide-y divide-[#e2e4e9] text-sm">
+              <thead className="bg-[#f8faff] text-left text-xs uppercase tracking-[0.08em] text-[#696a72]">
+                <tr>
+                  <th className="px-4 py-3">Contact</th>
+                  <th className="px-4 py-3">Channel</th>
+                  <th className="px-4 py-3">Segment</th>
+                  <th className="px-4 py-3">Orders</th>
+                  <th className="px-4 py-3">Revenue</th>
+                  <th className="px-4 py-3">Last activity</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#eef0f4] bg-white">
+                {contacts.map((contact) => (
+                  <tr key={`${contact.channel}-${contact.id}`} className="hover:bg-[#fbfcff]">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-[#020520]">{contact.display_name || contact.username || contact.phone || contact.external_id}</div>
+                      <div className="mt-1 text-xs text-[#696a72]">{contact.username ? `@${contact.username}` : contact.phone || contact.external_id}</div>
+                    </td>
+                    <td className="px-4 py-3"><span className="rounded-full bg-[#f0f4fe] px-3 py-1 text-xs font-semibold text-[#145aff]">{channelBadge(contact.channel)}</span></td>
+                    <td className="px-4 py-3"><span className="rounded-full bg-[#f5f5f5] px-3 py-1 text-xs font-semibold text-[#020520]">{segmentLabel(contact.segment)}</span></td>
+                    <td className="px-4 py-3 text-[#020520]">{contact.orders_count}</td>
+                    <td className="px-4 py-3 text-[#020520]">{contact.total_revenue}</td>
+                    <td className="px-4 py-3 text-[#696a72]">{formatDate(contact.last_message_at || contact.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

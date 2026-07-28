@@ -1,0 +1,2 @@
+ALTER TABLE company_knowledge_base_entries DROP COLUMN is_active;
+ALTER TABLE company_knowledge_base_entries DROP COLUMN ai_generated_description;

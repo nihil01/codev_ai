@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#145aff"/>
+    </linearGradient>
+  </defs>
+  <!-- Blue circle background -->
+  <circle cx="60" cy="60" r="60" fill="url(#bg)"/>
+  <!-- Robot head (white) -->
+  <ellipse cx="60" cy="64" rx="28" ry="26" fill="white"/>
+  <!-- Face (light blue) -->
+  <ellipse cx="60" cy="66" rx="20" ry="18" fill="#e0ecff"/>
+  <!-- Eyes -->
+  <circle cx="52" cy="62" r="4" fill="#145aff"/>
+  <circle cx="68" cy="62" r="4" fill="#145aff"/>
+  <!-- Eye shine -->
+  <circle cx="53" cy="60" r="1.5" fill="white"/>
+  <circle cx="69" cy="60" r="1.5" fill="white"/>
+  <!-- Antennas -->
+  <line x1="48" y1="42" x2="48" y2="36" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="48" cy="34" r="3" fill="white"/>
+  <line x1="72" y1="42" x2="72" y2="36" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="72" cy="34" r="3" fill="white"/>
+  <!-- Ears -->
+  <rect x="30" y="56" width="6" height="12" rx="3" fill="white"/>
+  <rect x="84" y="56" width="6" height="12" rx="3" fill="white"/>
+  <!-- Smile -->
+  <path d="M52 72 Q60 78 68 72" stroke="#145aff" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>

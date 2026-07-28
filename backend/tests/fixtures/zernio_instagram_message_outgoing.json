@@ -1,0 +1,31 @@
+{
+  "id": "outgoing-event-1",
+  "event": "message.sent",
+  "account": {
+    "id": "6a3b64259d9472faaecd089f",
+    "platform": "instagram",
+    "username": "christmaschoco.az",
+    "profileId": "6a384fdd0ba364270ea39d0e"
+  },
+  "conversation": {
+    "id": "6a3b660c9d9472faaecd1413",
+    "participantId": "1382442530307621",
+    "participantName": "Orik",
+    "participantUsername": "orkhanar",
+    "platformConversationId": "1382442530307621"
+  },
+  "message": {
+    "id": "6a3e35ce9d9472faaef062e3",
+    "text": "salam, necesiniz ?",
+    "sender": {
+      "id": "6a3b64259d9472faaecd089f",
+      "name": "Christmas Choco",
+      "username": "christmaschoco.az"
+    },
+    "sentAt": "2026-06-26T08:18:18.274Z",
+    "platform": "instagram",
+    "direction": "outgoing",
+    "conversationId": "6a3b660c9d9472faaecd1413",
+    "platformMessageId": "outgoing-platform-mid-1"
+  }
+}

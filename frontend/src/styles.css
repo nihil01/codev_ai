@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #020520;
+    background: #fcfcfc;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: #fcfcfc;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  /* SOUL.md card systems */
+  .card-compact {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 4px -2px;
+    padding: 12px 16px;
+  }
+
+  .card-large {
+    background: #fcfcfc;
+    border-radius: 40px;
+    padding: 48px 72px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 4px 12px rgba(0, 0, 0, 0.03),
+      0 12px 32px rgba(0, 0, 0, 0.02);
+  }
+
+  /* SOUL.md buttons */
+  .btn-primary-outlined {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid #0f1f3d;
+    color: #0f1f3d;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary-outlined:hover {
+    background: rgba(15, 31, 61, 0.04);
+  }
+
+  .btn-primary-filled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(180deg, #3b82f6 0%, #145aff 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary-filled:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e2e4e9;
+    color: #020520;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    border-color: #145aff;
+    color: #145aff;
+  }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-danger:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #696a72;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-ghost:hover {
+    background: #f0f4fe;
+    color: #145aff;
+  }
+
+  /* SOUL.md input styles */
+  .input-field {
+    width: 100%;
+    border: 1px solid #e2e4e9;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #020520;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .input-field:focus {
+    border-color: #145aff;
+    box-shadow: 0 0 0 3px rgba(20, 90, 255, 0.08);
+  }
+
+  .input-field:disabled {
+    background: #f5f5f5;
+    color: #696a72;
+  }
+
+  /* SOUL.md label */
+  .label-field {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #696a72;
+    letter-spacing: 0.01em;
+  }
+
+  /* Surface colors */
+  .surface-primary { background: #fcfcfc; }
+  .surface-secondary { background: #f0f4fe; }
+  .surface-card { background: #ffffff; }
+
+  /* Text colors */
+  .text-primary { color: #020520; }
+  .text-secondary { color: #696a72; }
+  .text-accent { color: #145aff; }
+
+  /* Border */
+  .border-subtle { border: 1px solid #e2e4e9; }
+
+  /* SOUL.md sidebar */
+  .sidebar-surface {
+    background: #ffffff;
+    border: 1px solid #e2e4e9;
+    border-radius: 16px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

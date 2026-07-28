@@ -1,0 +1,17 @@
+{
+  "name": "Codev",
+  "short_name": "Codev",
+  "description": "Kurs platforması üçün sosial media və müştəri əlaqələri idarəetməsi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fcfcfc",
+  "theme_color": "#145aff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

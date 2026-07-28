@@ -1,0 +1,44 @@
+{
+  "id": "002d4a4a-b94e-4236-9318-e839864f341f",
+  "event": "message.received",
+  "message": {
+    "id": "6a38d65e5f7d1751ab46d81e",
+    "conversationId": "6a38d04f5f7d1751ab4691ac",
+    "platform": "instagram",
+    "platformMessageId": "aWdfZAG1faXRlbToxOklHTWVzc2FnZAUlEOjE3ODQxNDcxNjgwOTI2MTk0OjM0MDI4MjM2Njg0MTcxMDMwMTI0NDI3NjAzNzEyNzM4OTcwNjM5MzozMjg3NDEyMzE2NDc0OTU5NzQ5NDI2NDE1NDI5MDEyNjg0OAZDZD",
+    "direction": "incoming",
+    "text": "Merhaba",
+    "attachments": [],
+    "sender": {
+      "id": "1382442530307621",
+      "name": "Orik",
+      "username": "orkhanar",
+      "instagramProfile": {
+        "isFollower": false,
+        "isFollowing": false,
+        "followerCount": 4,
+        "isVerified": false
+      },
+      "contactId": "6a38d050f69c34112d10614f"
+    },
+    "sentAt": "2026-06-22T06:29:47.688Z",
+    "isRead": false
+  },
+  "conversation": {
+    "id": "6a38d04f5f7d1751ab4691ac",
+    "platformConversationId": "1382442530307621",
+    "participantId": "1382442530307621",
+    "participantName": "Orik",
+    "participantUsername": "orkhanar",
+    "status": "active",
+    "contactId": "6a38d050f69c34112d10614f"
+  },
+  "account": {
+    "id": "6a3859815f7d1751ab34afcc",
+    "platform": "instagram",
+    "username": "christmaschoco.az",
+    "displayName": "✨Şokolad , şirin anların mənbəyi ✨",
+    "profileId": "6a384fdd0ba364270ea39d0e"
+  },
+  "timestamp": "2026-06-22T06:29:50.392Z"
+}
