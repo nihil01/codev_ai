@@ -205,7 +205,6 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
     <DashboardShell
       user={user}
       onLogout={onLogout}
-      badge={t('admin.badge')}
       title={t('admin.title')}
       subtitle={t('admin.subtitle')}
       navItems={[]}

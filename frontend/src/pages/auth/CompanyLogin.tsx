@@ -12,7 +12,6 @@ export function CompanyLogin({ onLogin }: CompanyLoginProps) {
 
   return (
     <AuthLayout
-      eyebrow={t('auth.companyEyebrow')}
       title={t('auth.companyTitle')}
     >
       <LoginForm onLogin={onLogin} />

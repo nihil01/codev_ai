@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link2, RefreshCw, Unplug } from 'lucide-react';
 import { api } from '../../api';
 import type { LinkedInIntegration } from '../../api';
-import { cardClass, primaryButtonClass, secondaryButtonClass } from '../../constants/styles';
-import { Spinner } from '../../components/ui/Spinner';
+import { SocialIntegrationLayout } from '../../components/social/SocialIntegrationLayout';
+import { primaryButtonClass, secondaryButtonClass } from '../../constants/styles';
 
 type Props = {
   companyId?: string | null;
@@ -39,7 +39,7 @@ export function LinkedInSettings({ companyId, onError, onNotice }: Props) {
     onError('');
     try {
       const { auth_url } = await api.connectLinkedIn(companyId);
-      if (!auth_url) throw new Error('Zernio boş OAuth ünvanı qaytardı.');
+      if (!auth_url) throw new Error('LinkedIn boş OAuth ünvanı qaytardı.');
       if (popup) popup.location.href = auth_url;
       else window.location.assign(auth_url);
       onNotice('LinkedIn qoşulma səhifəsi açıldı. İcazədən sonra statusu yeniləyin.');
@@ -62,35 +62,54 @@ export function LinkedInSettings({ companyId, onError, onNotice }: Props) {
 
   const connected = Boolean(integration?.connected);
   const label = integration?.display_name || integration?.username || integration?.linkedin_account_id || integration?.zernio_account_id || 'Hesab seçilməyib';
+  const accountContent = (
+    <div className="grid gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#708078]">Hesab</p>
+        <p className="mt-1 font-semibold text-[#18261d]">{label}</p>
+      </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#708078]">Qoşulma vaxtı</p>
+        <p className="mt-1 font-semibold text-[#18261d]">{formatDate(integration?.connected_at)}</p>
+      </div>
+      {integration?.linkedin_account_id && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#708078]">LinkedIn ID</p>
+          <p className="mt-1 break-all font-semibold text-[#18261d]">{integration.linkedin_account_id}</p>
+        </div>
+      )}
+    </div>
+  );
+  const actions = (
+    <>
+      <button type="button" className={primaryButtonClass} onClick={connect} disabled={connecting || !companyId}>
+        {connecting ? 'OAuth açılır...' : connected ? 'Yenidən qoş' : 'LinkedIn qoş'}
+      </button>
+      <button type="button" className={secondaryButtonClass} onClick={() => void load()} disabled={loading || !companyId}>
+        <RefreshCw size={16} /> Statusu yenilə
+      </button>
+      {connected && (
+        <button type="button" className={secondaryButtonClass} onClick={disconnect} disabled={disconnecting}>
+          <Unplug size={16} /> {disconnecting ? 'Ayrılır...' : 'Hesabı ayır'}
+        </button>
+      )}
+    </>
+  );
 
   return (
-    <section className="space-y-6">
-      <div className={cardClass}>
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-4">
-            <span className="rounded-[24px] bg-[#e4f5e9] p-4 text-[#15803d]"><Link2 size={28} /></span>
-            <div><p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#18261d]">Sosial şəbəkə</p><h2 className="mt-2 text-2xl font-light text-[#18261d]">LinkedIn</h2><p className="mt-2 text-sm text-[#18261d]">Zernio vasitəsilə LinkedIn hesabını qoşun və təqvimdən post paylaşın.</p></div>
-          </div>
-          <span className="rounded-full bg-[#e4f5e9] px-4 py-2 text-sm font-semibold text-[#18261d]">{connected ? 'Qoşulub' : 'Qoşulmayıb'}</span>
-        </div>
-      </div>
-      <div className={cardClass}>
-        {loading ? <Spinner label="LinkedIn statusu yüklənir..." /> : (
-          <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-            <div className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5">
-              <h3 className="text-lg font-light text-[#18261d]">Qoşulmuş hesab</h3>
-              <p className="mt-4 font-semibold text-[#18261d]">{label}</p>
-              <p className="mt-2 text-sm text-[#18261d]">Qoşulma vaxtı: {formatDate(integration?.connected_at)}</p>
-              <p className="mt-2 break-all text-xs text-[#18261d]">Zernio ID: {integration?.zernio_account_id || '—'}</p>
-            </div>
-            <div className="grid content-start gap-3 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5">
-              <button type="button" className={primaryButtonClass} onClick={connect} disabled={connecting || !companyId}>{connecting ? 'OAuth açılır...' : connected ? 'Yenidən qoş' : 'LinkedIn qoş'}</button>
-              <button type="button" className={secondaryButtonClass} onClick={load} disabled={loading || !companyId}><RefreshCw size={16} /> Statusu yenilə</button>
-              {connected && <button type="button" className={secondaryButtonClass} onClick={disconnect} disabled={disconnecting}><Unplug size={16} /> {disconnecting ? 'Ayrılır...' : 'Hesabı ayır'}</button>}
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
+    <SocialIntegrationLayout
+      icon={<Link2 size={28} />}
+      title="LinkedIn"
+      subtitle="LinkedIn hesabınızı qoşun və təqvimdən post paylaşın."
+      connected={connected}
+      connectedLabel="Qoşulub"
+      disconnectedLabel="Qoşulmayıb"
+      loading={loading}
+      loadingLabel="LinkedIn statusu yüklənir..."
+      accountTitle="Qoşulmuş hesab"
+      accountContent={accountContent}
+      actionsTitle="Əməliyyatlar"
+      actions={actions}
+    />
   );
 }

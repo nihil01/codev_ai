@@ -57,11 +57,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   return (
     <form onSubmit={handleLogin} className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#15803d]">
-          {t('auth.companyFormEyebrow')}
-        </p>
-
-        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#18261d]">
+        <h2 className="text-3xl font-semibold tracking-[-0.03em] text-[#18261d]">
           {t('auth.companyLogin')}
         </h2>
 

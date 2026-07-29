@@ -14,7 +14,6 @@ export type NavItem = {
 type DashboardShellProps = {
   user: CurrentUser;
   onLogout: () => void;
-  badge: string;
   title: string;
   subtitle?: string;
   navItems: NavItem[];
@@ -28,7 +27,6 @@ type DashboardShellProps = {
 export function DashboardShell({
   user,
   onLogout,
-  badge,
   title,
   subtitle,
   navItems,
@@ -43,14 +41,12 @@ export function DashboardShell({
     <div className="flex min-h-screen flex-col bg-[#f3faf5] text-[#18261d]">
       <header className="sticky top-0 z-40 border-b border-[#e1ebe4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex min-h-20 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center">
             <img
               src={codevLogo}
               alt="Codev"
               className="h-auto w-[132px] shrink-0 sm:w-[154px]"
             />
-            <span className="hidden h-8 w-px bg-[#e1ebe4] sm:block" aria-hidden="true" />
-            <p className="hidden max-w-40 truncate text-xs font-medium text-[#708078] sm:block">{badge}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -98,8 +94,7 @@ export function DashboardShell({
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 rounded-[24px] border border-[#e1ebe4] bg-white p-6 sm:p-8"
         >
-          <p className="eyebrow-label">Codev · {badge}</p>
-          <h1 className="mt-3 text-4xl font-bold leading-tight tracking-[-0.035em] sm:text-[44px]">
+          <h1 className="text-4xl font-bold leading-tight tracking-[-0.035em] sm:text-[44px]">
             <span className="gradient-text">{activeLabel}</span>
           </h1>
           {subtitle && <p className="mt-4 max-w-2xl text-base leading-7 text-[#708078]">{subtitle}</p>}

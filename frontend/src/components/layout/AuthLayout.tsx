@@ -5,13 +5,12 @@ import codevLogo from '../../assets/codev-logo.png';
 import { useI18n } from '../../i18n';
 
 type AuthLayoutProps = {
-  eyebrow: string;
   title: string;
   subtitle?: string;
   children: ReactNode;
 };
 
-export function AuthLayout({ eyebrow, title, subtitle, children }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   const { t } = useI18n();
   const features = [
     { label: t('auth.featuresAi'), icon: MessagesSquare },
@@ -35,7 +34,6 @@ export function AuthLayout({ eyebrow, title, subtitle, children }: AuthLayoutPro
           </div>
 
           <div className="my-14 max-w-[620px]">
-            <p className="eyebrow-label mb-[18px]">{eyebrow}</p>
             <h1 className="text-[42px] font-bold leading-[1.08] tracking-[-0.035em] text-[#18261d] sm:text-[56px] lg:text-[60px]">
               {title}
             </h1>
@@ -69,13 +67,6 @@ export function AuthLayout({ eyebrow, title, subtitle, children }: AuthLayoutPro
           className="flex items-center rounded-[24px] bg-[#d8e8dd] p-[14px] sm:p-7 lg:p-[42px]"
         >
           <div className="w-full rounded-[24px] bg-[#ffffff] p-7 sm:p-[42px]">
-            <div className="mb-7 flex items-center justify-between border-b border-[#e1ebe4] pb-[21px]">
-              <div>
-                <p className="eyebrow-label">Təhlükəsiz giriş</p>
-                <p className="mt-2 text-sm font-light text-[#18261d]">Şəxsi iş məkanınız</p>
-              </div>
-              <span className="rounded-full bg-[#e4f5e9] px-[14px] py-[9px] text-xs text-[#18261d]">AZ</span>
-            </div>
             {children}
           </div>
         </motion.section>

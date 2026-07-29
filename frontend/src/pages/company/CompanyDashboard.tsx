@@ -357,7 +357,6 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
     <DashboardShell
       user={user}
       onLogout={onLogout}
-      badge={t('company.badge')}
       title={t('company.title')}
       navItems={navItems}
       activeNav={activeSection}
