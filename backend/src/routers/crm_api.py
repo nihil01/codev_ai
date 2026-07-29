@@ -97,6 +97,7 @@ from services.zernio_integrator import (
     list_zernio_instagram_connected_account_ids,
     list_zernio_tiktok_connected_account_ids,
     list_zernio_whatsapp_connected_account_ids,
+    upsert_zernio_company_profile,
     upsert_zernio_instagram_connected_accounts,
     upsert_zernio_tiktok_connected_accounts,
     upsert_zernio_whatsapp_connected_accounts,
@@ -807,12 +808,7 @@ async def connect_instagram_with_zernio(
 ) -> InstagramConnectUrlResponse:
     _assert_company_access(tenant_id, user)
 
-    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
-    if not zernio_profile_id:
-        raise HTTPException(
-            status_code=409,
-            detail="Zernio company profile is missing for this company. Recreate the company user or create the Zernio profile first.",
-        )
+    zernio_profile_id = await _require_zernio_company_profile(db, tenant_id, user)
 
     try:
         auth_url = await IntegratorZernio().connect_social_network(
@@ -899,12 +895,7 @@ async def connect_whatsapp_with_zernio(
 ) -> InstagramConnectUrlResponse:
     _assert_company_access(tenant_id, user)
 
-    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
-    if not zernio_profile_id:
-        raise HTTPException(
-            status_code=409,
-            detail="Zernio company profile is missing for this company. Recreate the company user or create the Zernio profile first.",
-        )
+    zernio_profile_id = await _require_zernio_company_profile(db, tenant_id, user)
 
     try:
         auth_url = await IntegratorZernio().connect_social_network(
@@ -964,6 +955,62 @@ async def _disable_linkedin_connection(db: AsyncSession, tenant_id: uuid.UUID) -
     )
 
 
+async def _ensure_zernio_company_profile(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    user: UserClaims,
+) -> str | None:
+    """Return the tenant's Zernio profile, provisioning it once when possible."""
+    existing_profile_id = await get_zernio_profile_id(db, tenant_id)
+    if existing_profile_id:
+        return existing_profile_id
+    if not settings.zernio_api_key:
+        return None
+
+    # Serialize provisioning per tenant. Without this lock, two browser requests
+    # can create duplicate profiles in Zernio before either one reaches Postgres.
+    await db.execute(
+        text("select pg_advisory_xact_lock(hashtextextended(cast(:company_id as text), 0))"),
+        {"company_id": str(tenant_id)},
+    )
+    existing_profile_id = await get_zernio_profile_id(db, tenant_id)
+    if existing_profile_id:
+        return existing_profile_id
+
+    company_profile = await IntegratorZernio().create_company_profile(user.email, tenant_id)
+    await upsert_zernio_company_profile(
+        db,
+        company_id=tenant_id,
+        user_id=uuid.UUID(user.user_id),
+        company_email=user.email,
+        company_profile=company_profile,
+    )
+    profile_id = await get_zernio_profile_id(db, tenant_id)
+    if not profile_id:
+        raise RuntimeError("Zernio company profile was created but not persisted")
+    logger.info("Provisioned Zernio company profile company_id=%s", tenant_id)
+    return profile_id
+
+
+async def _require_zernio_company_profile(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    user: UserClaims,
+) -> str:
+    try:
+        profile_id = await _ensure_zernio_company_profile(db, tenant_id, user)
+    except RuntimeError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=503, detail="Social integrations are temporarily unavailable") from exc
+    except Exception as exc:
+        await db.rollback()
+        logger.warning("Zernio company profile provisioning failed", exc_info=True)
+        raise HTTPException(status_code=502, detail="Social integration setup failed") from exc
+    if not profile_id:
+        raise HTTPException(status_code=503, detail="Social integrations are not configured on this server")
+    return profile_id
+
+
 @router.get("/tenants/{tenant_id}/linkedin", response_model=LinkedInIntegrationResponse)
 async def get_linkedin_integration(
     tenant_id: uuid.UUID,
@@ -971,7 +1018,19 @@ async def get_linkedin_integration(
     user: UserClaims = Depends(get_current_user),
 ) -> LinkedInIntegrationResponse:
     _assert_company_access(tenant_id, user)
-    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
+    if not settings.zernio_api_key:
+        await _disable_linkedin_connection(db, tenant_id)
+        await db.commit()
+        return _linkedin_response(tenant_id, await _linkedin_connection(db, tenant_id))
+    try:
+        zernio_profile_id = await _ensure_zernio_company_profile(db, tenant_id, user)
+    except RuntimeError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=503, detail="LinkedIn integration is temporarily unavailable") from exc
+    except Exception as exc:
+        await db.rollback()
+        logger.warning("Zernio company profile provisioning failed", exc_info=True)
+        raise HTTPException(status_code=502, detail="LinkedIn integration setup failed") from exc
     if zernio_profile_id:
         try:
             accounts = await IntegratorZernio().get_connected_accounts(zernio_profile_id)
@@ -1053,7 +1112,6 @@ async def get_linkedin_integration(
     else:
         await _disable_linkedin_connection(db, tenant_id)
         await db.commit()
-        raise HTTPException(status_code=409, detail="Zernio company profile is missing for this company")
     return _linkedin_response(tenant_id, await _linkedin_connection(db, tenant_id))
 
 
@@ -1064,9 +1122,7 @@ async def connect_linkedin_with_zernio(
     user: UserClaims = Depends(get_current_user),
 ) -> InstagramConnectUrlResponse:
     _assert_company_access(tenant_id, user)
-    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
-    if not zernio_profile_id:
-        raise HTTPException(status_code=409, detail="Zernio company profile is missing for this company")
+    zernio_profile_id = await _require_zernio_company_profile(db, tenant_id, user)
     try:
         auth_url = await IntegratorZernio().connect_social_network(
             "linkedin", zernio_profile_id, redirect_url=_zernio_connect_redirect_url("linkedin", tenant_id)
@@ -1188,9 +1244,7 @@ async def connect_tiktok_with_zernio(
     user: UserClaims = Depends(get_current_user),
 ) -> InstagramConnectUrlResponse:
     _assert_company_access(tenant_id, user)
-    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
-    if not zernio_profile_id:
-        raise HTTPException(status_code=409, detail="Zernio company profile is missing for this company")
+    zernio_profile_id = await _require_zernio_company_profile(db, tenant_id, user)
     try:
         auth_url = await IntegratorZernio().connect_social_network(
             "tiktok",

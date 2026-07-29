@@ -188,8 +188,10 @@ class IntegratorZernio:
         return await asyncio.to_thread(self._create_company_profile_sync, company_email, company_uuid)
 
     def _create_company_profile_sync(self, company_email: str, company_uuid: uuid.UUID) -> dict[str, Any]:
+        # Zernio deduplicates retries after a remote success/local persistence failure.
         result = self.client.profiles.create_profile(
             name=company_email,
+            idempotency_key=f"codev-company-{company_uuid}",  # type: ignore[call-arg]
             description=str(company_uuid),
         )
 

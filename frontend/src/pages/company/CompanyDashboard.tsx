@@ -344,7 +344,6 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
               email={user.email}
               instagramChannel={instagramChannel}
               businessSettings={businessSettings}
-              onBusinessSettingsChange={setBusinessSettings}
               onError={setError}
               onNotice={setNotice}
             />
