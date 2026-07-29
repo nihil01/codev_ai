@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Leaf, MessagesSquare } from 'lucide-react';
+import codevLogo from '../../assets/codev-logo.png';
 import { useI18n } from '../../i18n';
 
 type AuthLayoutProps = {
@@ -27,14 +28,10 @@ export function AuthLayout({ eyebrow, title, subtitle, children }: AuthLayoutPro
           transition={{ duration: 0.45 }}
           className="flex min-h-[440px] flex-col justify-between rounded-[24px] bg-[#e4f5e9] p-7 sm:p-[42px] lg:p-14"
         >
-          <div className="flex items-center gap-[14px]">
-            <span className="grid h-12 w-12 place-items-center rounded-[24px] bg-[#ffffff] text-[#18261d]">
-              <Leaf size={24} strokeWidth={1.6} />
-            </span>
-            <div>
-              <p className="eyebrow-label">Codev</p>
-              <p className="mt-1 text-sm font-light text-[#18261d]">Kurs idarəetmə platforması</p>
-            </div>
+          <div className="flex items-center gap-4">
+            <img src={codevLogo} alt="Codev" className="h-auto w-[168px] sm:w-[190px]" />
+            <span className="hidden h-9 w-px bg-[#cfe4d5] sm:block" aria-hidden="true" />
+            <p className="hidden max-w-40 text-sm font-medium text-[#708078] sm:block">Kurs idarəetmə platforması</p>
           </div>
 
           <div className="my-14 max-w-[620px]">

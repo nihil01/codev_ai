@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Leaf, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import codevLogo from '../../assets/codev-logo.png';
 import type { CurrentUser } from '../../api';
 import { useI18n } from '../../i18n';
 
@@ -39,17 +40,17 @@ export function DashboardShell({
   const activeLabel = navItems.find((item) => item.id === activeNav)?.label ?? title;
 
   return (
-    <div className="min-h-screen bg-[#f3faf5] text-[#18261d]">
+    <div className="flex min-h-screen flex-col bg-[#f3faf5] text-[#18261d]">
       <header className="sticky top-0 z-40 border-b border-[#e1ebe4] bg-white/95 backdrop-blur">
         <div className="mx-auto flex min-h-20 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white">
-              <Leaf size={21} strokeWidth={1.8} />
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-lg font-bold tracking-[-0.03em] text-[#18261d]">Codev</p>
-              <p className="truncate text-xs font-medium text-[#708078]">{badge}</p>
-            </div>
+            <img
+              src={codevLogo}
+              alt="Codev"
+              className="h-auto w-[132px] shrink-0 sm:w-[154px]"
+            />
+            <span className="hidden h-8 w-px bg-[#e1ebe4] sm:block" aria-hidden="true" />
+            <p className="hidden max-w-40 truncate text-xs font-medium text-[#708078] sm:block">{badge}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -91,7 +92,7 @@ export function DashboardShell({
         </nav>
       </header>
 
-      <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12">
+      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 sm:px-6 sm:py-12">
         <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -106,6 +107,15 @@ export function DashboardShell({
 
         {children}
       </main>
+
+      <footer className="border-t border-[#e1ebe4] bg-white">
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-4 px-4 py-6 sm:flex-row sm:px-6">
+          <img src={codevLogo} alt="Codev" className="h-auto w-[118px]" />
+          <p className="text-center text-xs font-medium text-[#708078] sm:text-right">
+            Codev · Kurs idarəetmə platforması
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

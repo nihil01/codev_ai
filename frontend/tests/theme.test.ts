@@ -7,6 +7,7 @@ const frontendRoot = path.resolve(import.meta.dirname, '..');
 const sourceRoot = path.join(frontendRoot, 'src');
 const styles = fs.readFileSync(path.join(sourceRoot, 'styles.css'), 'utf8');
 const shell = fs.readFileSync(path.join(sourceRoot, 'components/layout/DashboardShell.tsx'), 'utf8');
+const authLayout = fs.readFileSync(path.join(sourceRoot, 'components/layout/AuthLayout.tsx'), 'utf8');
 const styleConstants = fs.readFileSync(path.join(sourceRoot, 'constants/styles.ts'), 'utf8');
 
 function sourceFiles(directory: string): string[] {
@@ -48,6 +49,16 @@ test('workspace uses a top bar rather than the old sidebar', () => {
   assert.match(shell, /<header/);
   assert.match(shell, /Workspace navigation/);
   assert.doesNotMatch(shell, /<motion\.aside|sidebar/i);
+});
+
+test('official Codev logo is used in auth, header, and footer', () => {
+  const logoPath = path.join(sourceRoot, 'assets/codev-logo.png');
+  assert.equal(fs.existsSync(logoPath), true);
+  assert.match(authLayout, /import codevLogo/);
+  assert.match(authLayout, /src=\{codevLogo\}/);
+  assert.match(shell, /import codevLogo/);
+  assert.match(shell, /<header[\s\S]*src=\{codevLogo\}/);
+  assert.match(shell, /<footer[\s\S]*src=\{codevLogo\}/);
 });
 
 test('frontend contains no blue-violet theme or ordinary card shadows', () => {
