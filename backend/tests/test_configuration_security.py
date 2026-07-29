@@ -26,3 +26,10 @@ def test_codev_compose_is_isolated_from_integrator_runtime() -> None:
     assert "ai-crm-bot_postgres_data" not in source
     assert "127.0.0.1:8200:80" not in source
     assert "127.0.0.1:8201:8000" not in source
+
+
+def test_codev_compose_uses_single_dotenv_source() -> None:
+    source = COMPOSE_PATH.read_text(encoding="utf-8")
+
+    assert "- ./.env\n" in source
+    assert ".env.docker" not in source

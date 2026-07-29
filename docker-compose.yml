@@ -9,7 +9,7 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - ./.env.docker
+      - ./.env
     environment:
       PYWAY_DATABASE_MIGRATION_DIR: /app/backend/infra/flyway/sql
       UPLOAD_DIR: /app/uploads
