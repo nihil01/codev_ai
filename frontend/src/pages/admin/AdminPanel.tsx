@@ -215,7 +215,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
       <div className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={cardClass}>
-            <h2 className="text-xl font-light text-[#0f3e17]">Administrator</h2>
+            <h2 className="text-xl font-light text-[#18261d]">Administrator</h2>
             <div className="mt-5 space-y-3 text-sm">
               <InfoRow label="Email" value={user.email} />
               <InfoRow label="Rol" value="Administrator" />
@@ -226,8 +226,8 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
           <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }} className={cardClass}>
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h2 className="text-xl font-light text-[#0f3e17]">{t('admin.createCompany')}</h2>
-                <p className="mt-1 text-sm text-[#222222]">{t('admin.createCompanyHint')}</p>
+                <h2 className="text-xl font-light text-[#18261d]">{t('admin.createCompany')}</h2>
+                <p className="mt-1 text-sm text-[#18261d]">{t('admin.createCompanyHint')}</p>
               </div>
             </div>
 
@@ -258,7 +258,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
                     <option key={value} value={value}>{t(`business.${value}`)}</option>
                   ))}
                 </select>
-                <p className="mt-2 text-xs font-semibold text-[#222222]">
+                <p className="mt-2 text-xs font-semibold text-[#18261d]">
                   {businessTypeHelper(formData.business_type)}
                 </p>
               </Field>
@@ -270,7 +270,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
                   onChange={(event) => setFormData({ ...formData, package_code: event.target.value as PackageCode })}
                 >
                   <option value="basic">Basic — 4000 text + 1000 voice, no autoposting</option>
-                  <option value="full">Full — all features, 50 AI videos/month</option>
+                  <option value="full">Full — all features and autoposting</option>
                 </select>
               </Field>
 
@@ -281,8 +281,8 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
 
             <AnimatePresence>
               {createdUser && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-6 rounded-[14px] border border-[#cfe7d3] bg-[#e1f4df] p-5 text-sm text-[#0f3e17]">
-                  <h3 className="text-lg font-light text-[#0f3e17]">{t('admin.companyCreated')}</h3>
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-6 rounded-[24px] border border-[#e4f5e9] bg-[#e4f5e9] p-5 text-sm text-[#18261d]">
+                  <h3 className="text-lg font-light text-[#18261d]">{t('admin.companyCreated')}</h3>
                   <div className="mt-4 grid gap-2">
                     <InfoRow label="User ID" value={createdUser.user_id} />
                     <InfoRow label="Email" value={createdUser.email} />
@@ -291,7 +291,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
                     <InfoRow label="Business Type" value={createdUser.business_type_label} />
                     <InfoRow label="Temporary Password" value={createdUser.temporary_password} mono />
                   </div>
-                  <p className="mt-4 font-semibold text-[#0f3e17]">{t('admin.saveAndSend')}</p>
+                  <p className="mt-4 font-semibold text-[#18261d]">{t('admin.saveAndSend')}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -301,9 +301,9 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className={cardClass}>
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0f3e17]">AI Prompts</p>
-              <h2 className="mt-2 text-xl font-light text-[#0f3e17]">Client AI Settings</h2>
-              <p className="mt-1 text-sm text-[#222222]">{t('admin.promptHint')}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#18261d]">AI Prompts</p>
+              <h2 className="mt-2 text-xl font-light text-[#18261d]">Client AI Settings</h2>
+              <p className="mt-1 text-sm text-[#18261d]">{t('admin.promptHint')}</p>
             </div>
           </div>
 
@@ -331,7 +331,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
               </Field>
 
               {promptRecord && (
-                <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4 text-sm">
+                <div className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4 text-sm">
                   <InfoRow label="Company" value={promptRecord.company_name} />
                   <InfoRow label="Username" value={promptRecord.username || '—'} />
                   <InfoRow label="Version" value={String(promptRecord.version)} />
@@ -339,24 +339,23 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
               )}
 
               {subscription && (
-                <form onSubmit={saveSubscription} className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4 text-sm">
-                  <h3 className="text-base font-light text-[#0f3e17]">Package and access</h3>
+                <form onSubmit={saveSubscription} className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4 text-sm">
+                  <h3 className="text-base font-light text-[#18261d]">Package and access</h3>
                   <div className="mt-4 grid gap-3">
                     <Field label="Package">
                       <select className={inputClass} value={subscriptionDraft.package_code} onChange={(event) => setSubscriptionDraft({ ...subscriptionDraft, package_code: event.target.value as PackageCode })}>
                         <option value="basic">Basic — 4000 text + 1000 voice, no autoposting</option>
-                        <option value="full">Full — all features, 50 AI videos/month</option>
+                        <option value="full">Full — all features and autoposting</option>
                       </select>
                     </Field>
-                    <label className="flex items-center gap-3 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-4 py-3 font-semibold text-[#0f3e17]">
+                    <label className="flex items-center gap-3 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] px-4 py-3 font-semibold text-[#18261d]">
                       <input type="checkbox" checked={subscriptionDraft.access_locked} onChange={(event) => setSubscriptionDraft({ ...subscriptionDraft, access_locked: event.target.checked })} />
                       Lock client access
                     </label>
                     <input className={inputClass} placeholder="Lock reason" value={subscriptionDraft.locked_reason} onChange={(event) => setSubscriptionDraft({ ...subscriptionDraft, locked_reason: event.target.value })} />
-                    <div className="grid gap-2 rounded-[14px] bg-[#fffefc] p-3">
+                    <div className="grid gap-2 rounded-[24px] bg-[#ffffff] p-3">
                       <InfoRow label="Text messages" value={`${subscription.text_messages_used} / ${subscription.monthly_text_messages_limit ?? '∞'}`} />
                       <InfoRow label="Voice messages" value={`${subscription.voice_messages_used} / ${subscription.monthly_voice_messages_limit ?? '∞'}`} />
-                      <InfoRow label="AI videos" value={`${subscription.ai_videos_used} / ${subscription.monthly_ai_videos_limit ?? '∞'}`} />
                       <InfoRow label="Autoposting" value={subscription.autoposting_enabled ? 'enabled' : 'disabled'} />
                       <InfoRow label="Period" value={subscription.usage_period} />
                     </div>
@@ -368,7 +367,7 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
 
             <form onSubmit={savePrompt} className="space-y-4">
               {loadingPrompt ? (
-                <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5 text-[#222222]">
+                <div className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5 text-[#18261d]">
                   <Spinner label={t('admin.promptLoading')} />
                 </div>
               ) : (
@@ -387,13 +386,13 @@ export function AdminPanel({ user, onLogout }: AdminPanelProps) {
                     />
                   </Field>
 
-                  <div className="rounded-[14px] border border-[#efeeeb] bg-[#e1f4df] p-4">
+                  <div className="rounded-[24px] border border-[#e1ebe4] bg-[#e4f5e9] p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#0f3e17]">Instagram Comments</p>
-                        <h3 className="text-base font-light text-[#0f3e17]">Comment system prompt</h3>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#18261d]">Instagram Comments</p>
+                        <h3 className="text-base font-light text-[#18261d]">Comment system prompt</h3>
                       </div>
-                      {commentPromptRecord && <span className="rounded-[14px] bg-[#fffefc] border border-[#efeeeb] px-3 py-1 text-xs font-semibold text-[#222222]">v{commentPromptRecord.version}</span>}
+                      {commentPromptRecord && <span className="rounded-[24px] bg-[#ffffff] border border-[#e1ebe4] px-3 py-1 text-xs font-semibold text-[#18261d]">v{commentPromptRecord.version}</span>}
                     </div>
                     <div className="space-y-4">
                       <Field label="Comment prompt title">

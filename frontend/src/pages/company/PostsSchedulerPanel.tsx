@@ -1,25 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays, CheckCircle2, Clock, History, ImageUp, Play, Send, Sparkles, Trash2, XCircle } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock, History, ImageUp, Play, Send, Trash2, XCircle } from 'lucide-react';
 import { api } from '../../api';
-import type { KnowledgeEntry, SocialPostDraft, SocialPostDraftCreate } from '../../api';
+import type { SocialPostDraft, SocialPostDraftCreate } from '../../api';
 import { cardClass, inputClass, primaryButtonClass, secondaryButtonClass } from '../../constants/styles';
 import { Field } from '../../components/ui/Field';
 import { Spinner } from '../../components/ui/Spinner';
 import { useI18n } from '../../i18n';
 
-type Platform = 'instagram' | 'tiktok';
+type Platform = 'instagram' | 'linkedin' | 'tiktok';
 type PostsTab = 'active' | 'history';
 
 type PostsSchedulerPanelProps = {
   companyId?: string | null;
-  products: KnowledgeEntry[];
   onError?: (message: string) => void;
   onNotice?: (message: string) => void;
 };
 
 const platformOptions: Array<{ value: Platform; label: string }> = [
   { value: 'instagram', label: 'Instagram' },
+  { value: 'linkedin', label: 'LinkedIn' },
   { value: 'tiktok', label: 'TikTok' },
 ];
 
@@ -30,7 +30,7 @@ const minuteOptions = Array.from({ length: 12 }, (_, index) => String(index * 5)
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
-  return `${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone: BAKU_TIMEZONE }).format(new Date(value))} (${BAKU_GMT_LABEL})`;
+  return `${new Intl.DateTimeFormat('az-AZ', { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone: BAKU_TIMEZONE }).format(new Date(value))} (${BAKU_GMT_LABEL})`;
 }
 
 function bakuParts(date = new Date()) {
@@ -125,7 +125,7 @@ function isHistoryPost(post: SocialPostDraft) {
   return false;
 }
 
-export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: PostsSchedulerPanelProps) {
+export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSchedulerPanelProps) {
   const { t } = useI18n();
   const initialSchedule = useMemo(() => defaultBakuSchedule(), []);
   const [posts, setPosts] = useState<SocialPostDraft[]>([]);
@@ -143,13 +143,6 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [reviewingPostId, setReviewingPostId] = useState<string | null>(null);
 
-  const productOptions = useMemo(() => products.filter((entry) => entry.image_url), [products]);
-  const [productId, setProductId] = useState('');
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiCaption, setAiCaption] = useState('');
-  const [generatingVideo, setGeneratingVideo] = useState(false);
-
-  const selectedProduct = productOptions.find((product) => product.id === productId);
   const scheduleIsPast = isScheduleInPast(selectedDay, selectedTime);
   const selectedSchedule = toBakuIsoDatetime(selectedDay, selectedTime);
   const days = useMemo(() => monthMatrix(visibleMonth), [visibleMonth]);
@@ -169,10 +162,6 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
     return () => { cancelled = true; };
   }, [companyId]);
 
-  useEffect(() => {
-    if (!productId && productOptions[0]) setProductId(productOptions[0].id);
-  }, [productId, productOptions]);
-
   function togglePlatform(platform: Platform) {
     setSelectedPlatforms((current) => current.includes(platform) ? (current.length > 1 ? current.filter((item) => item !== platform) : current) : [...current, platform]);
   }
@@ -180,8 +169,11 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
   async function createDraftsForPlatforms(base: Omit<SocialPostDraftCreate, 'platform'>) {
     if (!companyId) return [];
     const created: SocialPostDraft[] = [];
-    for (const platform of selectedPlatforms) created.push(await api.createSocialPostDraft(companyId, { ...base, platform }));
-    setPosts((current) => [...created, ...current]);
+    for (const platform of selectedPlatforms) {
+      const draft = await api.createSocialPostDraft(companyId, { ...base, platform });
+      created.push(draft);
+      setPosts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
+    }
     return created;
   }
 
@@ -200,29 +192,11 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
       });
       setMediaFile(null); setManualTitle(''); setManualCaption('');
       onNotice?.(t('posts.uploaded'));
-    } catch (err) { onError?.(err instanceof Error ? err.message : String(err)); }
+    } catch (err) {
+      onError?.(err instanceof Error ? err.message : String(err));
+      api.socialPostDrafts(companyId).then(setPosts).catch(() => undefined);
+    }
     finally { setSavingManual(false); }
-  }
-
-  async function generateReplicateVideo() {
-    if (!companyId || !selectedProduct || !aiPrompt.trim() || !aiCaption.trim() || selectedPlatforms.length === 0) return;
-    setGeneratingVideo(true); onError?.(''); onNotice?.('');
-    try {
-      const result = await api.createReplicateProductVideo(companyId, {
-        product_id: selectedProduct.id,
-        platforms: selectedPlatforms,
-        prompt: aiPrompt.trim(),
-        caption: aiCaption.trim(),
-        title: `AI video: ${selectedProduct.title}`,
-        scheduled_for: null,
-        duration: 5,
-        aspect_ratio: '9:16',
-      });
-      setPosts((current) => [...result.drafts, ...current]);
-      setAiPrompt(''); setAiCaption(''); setActiveTab('active');
-      onNotice?.(t('posts.videoReady'));
-    } catch (err) { onError?.(err instanceof Error ? err.message : String(err)); }
-    finally { setGeneratingVideo(false); }
   }
 
   async function publishPost(postId: string) {
@@ -284,73 +258,63 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={cardClass}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3">
-            <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]"><Send size={22} /></span>
+            <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]"><Send size={22} /></span>
             <div>
-              <h2 className="text-xl font-light text-[#0f3e17]">{t('posts.title')}</h2>
-              <p className="mt-1 text-sm text-[#222222]">{t('posts.subtitle')}</p>
+              <h2 className="text-xl font-light text-[#18261d]">{t('posts.title')}</h2>
+              <p className="mt-1 text-sm text-[#18261d]">{t('posts.subtitle')}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
             {platformOptions.map((platform) => (
-              <button key={platform.value} type="button" onClick={() => togglePlatform(platform.value)} className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${selectedPlatforms.includes(platform.value) ? 'border-[#0f3e17] bg-[#0f3e17] text-[#fffefc]' : 'border-[#efeeeb] bg-[#fffefc] text-[#0f3e17]'}`}>{platform.label}</button>
+              <button key={platform.value} type="button" onClick={() => togglePlatform(platform.value)} className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${selectedPlatforms.includes(platform.value) ? 'border-transparent bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white' : 'border-[#e1ebe4] bg-[#ffffff] text-[#18261d]'}`}>{platform.label}</button>
             ))}
           </div>
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[14px] border border-[#efeeeb] p-4">
+          <div className="rounded-[24px] border border-[#e1ebe4] p-4">
             <div className="flex items-center justify-between">
               <button type="button" className={secondaryButtonClass} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}>←</button>
               <div className="text-center">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f3e17]">{t('posts.scheduleEyebrow')}</p>
-                <h3 className="text-lg font-light text-[#0f3e17]">{new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: BAKU_TIMEZONE }).format(visibleMonth)}</h3>
-                <p className="mt-1 text-xs text-[#222222]">{t('posts.scheduleHint')}</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#18261d]">{t('posts.scheduleEyebrow')}</p>
+                <h3 className="text-lg font-semibold text-[#18261d]">{new Intl.DateTimeFormat('az-AZ', { month: 'long', year: 'numeric', timeZone: BAKU_TIMEZONE }).format(visibleMonth)}</h3>
+                <p className="mt-1 text-xs text-[#18261d]">{t('posts.scheduleHint')}</p>
               </div>
               <button type="button" className={secondaryButtonClass} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}>→</button>
             </div>
-            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase text-[#222222]">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}</div>
+            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase text-[#18261d]">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}</div>
             <div className="mt-2 grid grid-cols-7 gap-2">
               {days.map((day) => {
                 const key = dateKey(day); const active = key === selectedDay; const muted = day.getMonth() !== visibleMonth.getMonth(); const past = key < todayBakuKey();
-                return <button key={key} type="button" disabled={past} onClick={() => setSelectedDay(key)} className={`aspect-square rounded-[14px] border text-sm font-semibold transition ${active ? 'border-[#0f3e17] bg-[#0f3e17] text-[#fffefc]' : 'border-[#efeeeb] bg-[#fffefc] text-[#0f3e17] hover:border-[#0f3e17]'} ${muted ? 'opacity-40' : ''} ${past ? 'cursor-not-allowed opacity-30 hover:border-[#efeeeb]' : ''}`}>{day.getDate()}</button>;
+                return <button key={key} type="button" disabled={past} onClick={() => setSelectedDay(key)} className={`aspect-square rounded-[24px] border text-sm font-semibold transition ${active ? 'border-transparent bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white' : 'border-[#e1ebe4] bg-[#ffffff] text-[#18261d] hover:border-[#15803d]'} ${muted ? 'opacity-40' : ''} ${past ? 'cursor-not-allowed opacity-30 hover:border-[#e1ebe4]' : ''}`}>{day.getDate()}</button>;
               })}
             </div>
             <Field label={t('posts.timeLabel')}>
-              <div className="mt-4 rounded-[14px] border border-[#efeeeb] bg-[#e1f4df] p-3">
+              <div className="mt-4 rounded-[24px] border border-[#e1ebe4] bg-[#e4f5e9] p-3">
                 <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-[#0f3e17]" />
-                  <select className={`${inputClass} bg-[#fffefc] font-mono`} value={selectedHour} onChange={(event) => setSelectedTime(`${event.target.value}:${selectedMinute}`)}>{hours24.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
-                  <span className="text-lg font-bold text-[#0f3e17]">:</span>
-                  <select className={`${inputClass} bg-[#fffefc] font-mono`} value={selectedMinute} onChange={(event) => setSelectedTime(`${selectedHour}:${event.target.value}`)}>{minuteOptions.map((minute) => <option key={minute} value={minute}>{minute}</option>)}</select>
-                  <span className="rounded-full bg-[#fffefc] px-3 py-2 text-xs font-semibold text-[#0f3e17]">Baku {BAKU_GMT_LABEL}</span>
+                  <Clock size={18} className="text-[#18261d]" />
+                  <select className={`${inputClass} bg-[#ffffff] font-mono`} value={selectedHour} onChange={(event) => setSelectedTime(`${event.target.value}:${selectedMinute}`)}>{hours24.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
+                  <span className="text-lg font-bold text-[#18261d]">:</span>
+                  <select className={`${inputClass} bg-[#ffffff] font-mono`} value={selectedMinute} onChange={(event) => setSelectedTime(`${selectedHour}:${event.target.value}`)}>{minuteOptions.map((minute) => <option key={minute} value={minute}>{minute}</option>)}</select>
+                  <span className="rounded-full bg-[#ffffff] px-3 py-2 text-xs font-semibold text-[#18261d]">Baku {BAKU_GMT_LABEL}</span>
                 </div>
-                {scheduleIsPast && <p className="mt-2 text-xs font-semibold text-[#0c2f10]">{t('posts.pastWarning')}</p>}
+                {scheduleIsPast && <p className="mt-2 text-xs font-semibold text-[#116932]">{t('posts.pastWarning')}</p>}
               </div>
             </Field>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[14px] border border-[#efeeeb] p-4">
-              <div className="flex items-center gap-2 text-lg font-semibold text-[#0f3e17]"><ImageUp size={20} /> {t('posts.uploadTitle')}</div>
+            <div className="rounded-[24px] border border-[#e1ebe4] p-4">
+              <div className="flex items-center gap-2 text-lg font-semibold text-[#18261d]"><ImageUp size={20} /> {t('posts.uploadTitle')}</div>
               <div className="mt-4 grid gap-3">
-                <input type="file" accept="image/*,video/*" onChange={(event) => setMediaFile(event.target.files?.[0] ?? null)} className="w-full rounded-[14px] border border-dashed border-[#efeeeb] bg-[#fffefc] px-4 py-6 text-sm text-[#222222] file:mr-4 file:rounded-[14px] file:border-0 file:bg-[#0f3e17] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#fffefc]" />
+                <label className="flex cursor-pointer items-center gap-3 rounded-[24px] border border-dashed border-[#e1ebe4] bg-white px-4 py-5 text-sm text-[#708078] transition-colors hover:border-[#15803d] hover:bg-[#e4f5e9]">
+                  <input type="file" accept="image/*,video/*" onChange={(event) => setMediaFile(event.target.files?.[0] ?? null)} className="sr-only" />
+                  <span className="shrink-0 rounded-full bg-[#15803d] px-4 py-2 font-medium text-white">Fayl seç</span>
+                  <span className="min-w-0 truncate">{mediaFile?.name ?? 'Fayl seçilməyib'}</span>
+                </label>
                 <input className={inputClass} placeholder={t('posts.titlePlaceholder')} value={manualTitle} onChange={(e) => setManualTitle(e.target.value)} />
                 <textarea className={`${inputClass} min-h-[110px] resize-y`} placeholder={t('posts.captionPlaceholder')} value={manualCaption} onChange={(e) => setManualCaption(e.target.value)} />
                 <button type="button" onClick={saveUploadedPost} disabled={savingManual || !mediaFile || !manualCaption.trim() || scheduleIsPast} className={primaryButtonClass}>{savingManual ? t('posts.saving') : t('posts.scheduleMedia')}</button>
-              </div>
-            </div>
-
-            <div className="rounded-[14px] border border-[#efeeeb] p-4">
-              <div className="flex items-center gap-2 text-lg font-semibold text-[#0f3e17]"><Sparkles size={20} /> {t('posts.aiTitle')}</div>
-              <div className="mt-4 grid gap-3">
-                <select className={inputClass} value={productId} onChange={(e) => setProductId(e.target.value)}>
-                  {productOptions.length === 0 && <option value="">{t('posts.noProducts')}</option>}
-                  {productOptions.map((product) => <option key={product.id} value={product.id}>{product.title}</option>)}
-                </select>
-                {selectedProduct?.image_url && <img src={selectedProduct.image_url} alt={selectedProduct.title} className="h-36 w-full rounded-[14px] object-cover" />}
-                <textarea className={`${inputClass} min-h-[90px] resize-y`} placeholder={t('posts.promptPlaceholder')} value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} />
-                <textarea className={`${inputClass} min-h-[90px] resize-y`} placeholder={t('posts.aiCaptionPlaceholder')} value={aiCaption} onChange={(e) => setAiCaption(e.target.value)} />
-                <button type="button" onClick={generateReplicateVideo} disabled={generatingVideo || !selectedProduct || !aiPrompt.trim() || !aiCaption.trim()} className={primaryButtonClass}>{generatingVideo ? <Spinner label={t('posts.generating')} /> : t('posts.generate')}</button>
               </div>
             </div>
           </div>
@@ -360,43 +324,43 @@ export function PostsSchedulerPanel({ companyId, products, onError, onNotice }: 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={cardClass}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]">{activeTab === 'active' ? <CalendarDays size={22} /> : <History size={22} />}</span>
+            <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]">{activeTab === 'active' ? <CalendarDays size={22} /> : <History size={22} />}</span>
             <div>
-              <h2 className="text-xl font-light text-[#0f3e17]">{activeTab === 'active' ? t('posts.activeTitle') : t('posts.historyTitle')}</h2>
-              <p className="mt-1 text-sm text-[#222222]">{activeTab === 'active' ? t('posts.activeHint') : t('posts.historyHint')}</p>
+              <h2 className="text-xl font-light text-[#18261d]">{activeTab === 'active' ? t('posts.activeTitle') : t('posts.historyTitle')}</h2>
+              <p className="mt-1 text-sm text-[#18261d]">{activeTab === 'active' ? t('posts.activeHint') : t('posts.historyHint')}</p>
             </div>
           </div>
-          <div className="flex rounded-[14px] border border-[#efeeeb] bg-[#e1f4df] p-1">
-            <button type="button" onClick={() => setActiveTab('active')} className={`rounded-[14px] px-4 py-2 text-sm font-semibold ${activeTab === 'active' ? 'bg-[#fffefc] text-[#0f3e17] ' : 'text-[#222222]'}`}>{t('posts.activeTitle')} ({activePosts.length})</button>
-            <button type="button" onClick={() => setActiveTab('history')} className={`rounded-[14px] px-4 py-2 text-sm font-semibold ${activeTab === 'history' ? 'bg-[#fffefc] text-[#0f3e17] ' : 'text-[#222222]'}`}>{t('posts.historyTitle')} ({historyPosts.length})</button>
+          <div className="flex rounded-[24px] border border-[#e1ebe4] bg-[#e4f5e9] p-1">
+            <button type="button" onClick={() => setActiveTab('active')} className={`rounded-[24px] px-4 py-2 text-sm font-semibold ${activeTab === 'active' ? 'bg-[#ffffff] text-[#18261d] ' : 'text-[#18261d]'}`}>{t('posts.activeTitle')} ({activePosts.length})</button>
+            <button type="button" onClick={() => setActiveTab('history')} className={`rounded-[24px] px-4 py-2 text-sm font-semibold ${activeTab === 'history' ? 'bg-[#ffffff] text-[#18261d] ' : 'text-[#18261d]'}`}>{t('posts.historyTitle')} ({historyPosts.length})</button>
           </div>
         </div>
-        <div className="mt-5 overflow-hidden rounded-[14px] border border-[#efeeeb]">
-          {visiblePosts.length === 0 ? <p className="p-4 text-sm text-[#222222]">{activeTab === 'active' ? t('posts.empty') : t('posts.historyEmpty')}</p> : (
-            <div className="divide-y divide-[#efeeeb]">
+        <div className="mt-5 overflow-hidden rounded-[24px] border border-[#e1ebe4]">
+          {visiblePosts.length === 0 ? <p className="p-4 text-sm text-[#18261d]">{activeTab === 'active' ? t('posts.empty') : t('posts.historyEmpty')}</p> : (
+            <div className="divide-y divide-[#e1ebe4]">
               {visiblePosts.map((post) => {
                 const mediaUrl = post.media_urls[0];
                 const pending = post.status === 'pending_review';
                 const history = isHistoryPost(post);
                 return (
                   <div key={post.id} className="grid gap-3 p-4 text-sm lg:grid-cols-[120px_96px_1fr_140px_260px] lg:items-center">
-                    <span className="font-semibold capitalize text-[#0f3e17]">{post.platform}</span>
-                    <div>{mediaUrl ? (isVideoUrl(mediaUrl) ? <video src={mediaUrl} controls className="h-20 w-20 rounded-[14px] object-cover" /> : <img src={mediaUrl} alt={post.title ?? post.caption} className="h-20 w-20 rounded-[14px] object-cover" />) : <span className="text-xs text-[#222222]">—</span>}</div>
+                    <span className="font-semibold capitalize text-[#18261d]">{post.platform}</span>
+                    <div>{mediaUrl ? (isVideoUrl(mediaUrl) ? <video src={mediaUrl} controls className="h-20 w-20 rounded-[24px] object-cover" /> : <img src={mediaUrl} alt={post.title ?? post.caption} className="h-20 w-20 rounded-[24px] object-cover" />) : <span className="text-xs text-[#18261d]">—</span>}</div>
                     <div>
-                      <p className="font-semibold text-[#0f3e17]">{post.title || post.caption.slice(0, 80)}</p>
-                      <p className="text-xs text-[#222222]">{post.media_urls.length} {t('posts.media')} · {post.scheduled_for ? formatDate(post.scheduled_for) : t('posts.noSchedule')} {post.error_message ? `· ${post.error_message}` : ''}</p>
+                      <p className="font-semibold text-[#18261d]">{post.title || post.caption.slice(0, 80)}</p>
+                      <p className="text-xs text-[#18261d]">{post.media_urls.length} {t('posts.media')} · {post.scheduled_for ? formatDate(post.scheduled_for) : t('posts.noSchedule')} {post.error_message ? `· ${post.error_message}` : ''}</p>
                     </div>
-                    <span className={`rounded-full px-3 py-1 text-center text-xs font-semibold ${pending ? 'bg-[#b1dbb8] text-[#0f3e17]' : 'bg-[#e1f4df] text-[#0f3e17]'}`}>{pending ? t('posts.pendingReview') : post.status}</span>
+                    <span className={`rounded-full px-3 py-1 text-center text-xs font-semibold ${pending ? 'bg-[#ffffff] text-[#18261d]' : 'bg-[#e4f5e9] text-[#18261d]'}`}>{pending ? t('posts.pendingReview') : post.status}</span>
                     <div className="flex flex-wrap gap-2">
                       {pending ? (
                         <>
-                          <button type="button" disabled={reviewingPostId === post.id || scheduleIsPast} onClick={() => approveAndSchedule(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#b1dbb8] px-3 py-2 text-xs font-semibold text-[#0f3e17] disabled:opacity-40"><CheckCircle2 size={14} /> {t('posts.approveSchedule')}</button>
-                          <button type="button" disabled={reviewingPostId === post.id} onClick={() => rejectPost(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#b6ced5] px-3 py-2 text-xs font-semibold text-[#0c2f10] disabled:opacity-40"><XCircle size={14} /> {t('posts.reject')}</button>
+                          <button type="button" disabled={reviewingPostId === post.id || scheduleIsPast} onClick={() => approveAndSchedule(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#ffffff] px-3 py-2 text-xs font-semibold text-[#18261d] disabled:opacity-40"><CheckCircle2 size={14} /> {t('posts.approveSchedule')}</button>
+                          <button type="button" disabled={reviewingPostId === post.id} onClick={() => rejectPost(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#d8e8dd] px-3 py-2 text-xs font-semibold text-[#116932] disabled:opacity-40"><XCircle size={14} /> {t('posts.reject')}</button>
                         </>
                       ) : !history ? (
                         <>
-                          <button type="button" disabled={publishingPostId === post.id || post.status === 'published' || (post.status === 'scheduled' && Boolean(post.zernio_post_id))} onClick={() => publishPost(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#0f3e17] px-3 py-2 text-xs font-semibold text-[#0f3e17] disabled:opacity-40"><Play size={14} /> {publishingPostId === post.id ? t('posts.publishing') : post.status === 'scheduled' && post.zernio_post_id ? t('posts.scheduledButton') : t('posts.publishNow')}</button>
-                          <button type="button" disabled={deletingPostId === post.id} onClick={() => deletePost(post)} className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#b6ced5] px-3 py-2 text-xs font-semibold text-[#0c2f10] disabled:opacity-40"><Trash2 size={14} /> {deletingPostId === post.id ? t('posts.deleting') : t('posts.delete')}</button>
+                          <button type="button" disabled={publishingPostId === post.id || post.status === 'published' || (post.status === 'scheduled' && Boolean(post.zernio_post_id))} onClick={() => publishPost(post.id)} className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#18261d] px-3 py-2 text-xs font-semibold text-[#18261d] disabled:opacity-40"><Play size={14} /> {publishingPostId === post.id ? t('posts.publishing') : post.status === 'scheduled' && post.zernio_post_id ? t('posts.scheduledButton') : t('posts.publishNow')}</button>
+                          <button type="button" disabled={deletingPostId === post.id} onClick={() => deletePost(post)} className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#d8e8dd] px-3 py-2 text-xs font-semibold text-[#116932] disabled:opacity-40"><Trash2 size={14} /> {deletingPostId === post.id ? t('posts.deleting') : t('posts.delete')}</button>
                         </>
                       ) : null}
                     </div>

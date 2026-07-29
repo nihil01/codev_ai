@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field, StringConstraints
 MAX_HISTORY_MESSAGES = 10
 MAX_PROMPT_LENGTH = 3000
 DEFAULT_HANDOFF_KEYWORDS = "оператор, менеджер, человек, manager, human"
@@ -30,9 +30,19 @@ class BotSettingsUpdate(BaseModel):
     system_prompt: str | None = Field(default=None, max_length=MAX_PROMPT_LENGTH)
 
 
+NormalizedPrompt = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_PROMPT_LENGTH),
+]
+NormalizedOptionalTitle = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, max_length=255),
+] | None
+
+
 class AdminBotPromptUpdate(BaseModel):
-    system_prompt: str = Field(min_length=1, max_length=MAX_PROMPT_LENGTH)
-    title: str | None = Field(default=None, max_length=255)
+    system_prompt: NormalizedPrompt
+    title: NormalizedOptionalTitle = None
 
 
 class AdminBotPromptResponse(BaseModel):
@@ -45,8 +55,8 @@ class AdminBotPromptResponse(BaseModel):
 
 
 class CommentPromptUpdate(BaseModel):
-    system_prompt: str = Field(min_length=1, max_length=MAX_PROMPT_LENGTH)
-    title: str | None = Field(default=None, max_length=255)
+    system_prompt: NormalizedPrompt
+    title: NormalizedOptionalTitle = None
 
 
 class CommentPromptResponse(BaseModel):
@@ -158,7 +168,6 @@ class CompanySubscriptionResponse(BaseModel):
     package_code: Literal["basic", "full"]
     monthly_text_messages_limit: int | None = None
     monthly_voice_messages_limit: int | None = None
-    monthly_ai_videos_limit: int | None = None
     autoposting_enabled: bool
     access_locked: bool
     locked_reason: str | None = None
@@ -166,7 +175,6 @@ class CompanySubscriptionResponse(BaseModel):
     usage_period: str
     text_messages_used: int
     voice_messages_used: int
-    ai_videos_used: int
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -296,24 +304,6 @@ class SocialPostScheduleRequest(BaseModel):
     scheduled_for: datetime
 
 
-class ReplicateProductVideoCreate(BaseModel):
-    product_id: uuid.UUID
-    platforms: list[Literal["instagram", "tiktok"]] = Field(min_length=1, max_length=2)
-    prompt: str = Field(min_length=1, max_length=2000)
-    caption: str = Field(min_length=1, max_length=4000)
-    title: str | None = Field(default=None, max_length=255)
-    scheduled_for: datetime | None = None
-    duration: int = Field(default=5, ge=5, le=10)
-    aspect_ratio: str = Field(default="9:16", max_length=32)
-
-
-class ReplicateProductVideoResponse(BaseModel):
-    replicate_prediction_id: str | None = None
-    video_url: str | None = None
-    drafts: list[SocialPostDraftResponse]
-    replicate_response: dict
-
-
 class TikTokIntegrationResponse(BaseModel):
     tenant_id: str
     connected: bool
@@ -323,6 +313,16 @@ class TikTokIntegrationResponse(BaseModel):
     display_name: str | None = None
     connected_at: datetime | None = None
     creator_info: dict | None = None
+
+
+class LinkedInIntegrationResponse(BaseModel):
+    tenant_id: str
+    connected: bool
+    zernio_account_id: str | None = None
+    linkedin_account_id: str | None = None
+    username: str | None = None
+    display_name: str | None = None
+    connected_at: datetime | None = None
 
 
 class MessageResponse(BaseModel):

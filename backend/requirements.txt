@@ -16,5 +16,3 @@ pyway==0.3.32
 zernio-sdk
 boto3==1.42.1
 python-telegram-bot==22.8
-uvicorn
-replicate

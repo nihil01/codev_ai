@@ -9,7 +9,6 @@ export type CompanySubscription = {
   package_code: PackageCode;
   monthly_text_messages_limit?: number | null;
   monthly_voice_messages_limit?: number | null;
-  monthly_ai_videos_limit?: number | null;
   autoposting_enabled: boolean;
   access_locked: boolean;
   locked_reason?: string | null;
@@ -17,7 +16,6 @@ export type CompanySubscription = {
   usage_period: string;
   text_messages_used: number;
   voice_messages_used: number;
-  ai_videos_used: number;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -289,24 +287,6 @@ export type SocialPostMediaUploadResponse = {
   filename: string;
 };
 
-export type ReplicateProductVideoCreate = {
-  product_id: string;
-  platforms: Array<'instagram' | 'tiktok'>;
-  prompt: string;
-  caption: string;
-  title?: string | null;
-  scheduled_for?: string | null;
-  duration?: number;
-  aspect_ratio?: string;
-};
-
-export type ReplicateProductVideoResponse = {
-  replicate_prediction_id?: string | null;
-  video_url?: string | null;
-  drafts: SocialPostDraft[];
-  replicate_response: Record<string, unknown>;
-};
-
 export type SocialPostDraft = SocialPostDraftCreate & {
   id: string;
   company_id: string;
@@ -319,6 +299,16 @@ export type SocialPostDraft = SocialPostDraftCreate & {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+};
+
+export type LinkedInIntegration = {
+  tenant_id: string;
+  connected: boolean;
+  zernio_account_id?: string | null;
+  linkedin_account_id?: string | null;
+  username?: string | null;
+  display_name?: string | null;
+  connected_at?: string | null;
 };
 
 export type TikTokIntegration = {
@@ -656,11 +646,6 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  createReplicateProductVideo: (tenantId: string, payload: ReplicateProductVideoCreate) =>
-    request<ReplicateProductVideoResponse>(`/api/tenants/${tenantId}/social-posts/replicate-product-video`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
   publishSocialPost: (tenantId: string, postId: string) =>
     request<SocialPostDraft>(`/api/tenants/${tenantId}/social-posts/${postId}/publish`, { method: 'POST' }),
   scheduleSocialPost: (tenantId: string, postId: string, scheduledFor: string) =>
@@ -672,6 +657,9 @@ export const api = {
     request<SocialPostDraft>(`/api/tenants/${tenantId}/social-posts/${postId}/reject`, { method: 'POST' }),
   deleteSocialPost: (tenantId: string, postId: string) =>
     request<void>(`/api/tenants/${tenantId}/social-posts/${postId}`, { method: 'DELETE' }),
+  linkedinIntegration: (tenantId: string) => request<LinkedInIntegration>(`/api/tenants/${tenantId}/linkedin`),
+  connectLinkedIn: (tenantId: string) => request<InstagramConnectUrlResponse>(`/api/tenants/${tenantId}/linkedin/connect`, { method: 'POST', body: JSON.stringify({}) }),
+  disconnectLinkedIn: (tenantId: string) => request<LinkedInIntegration>(`/api/tenants/${tenantId}/linkedin`, { method: 'DELETE' }),
   tiktokIntegration: (tenantId: string) => request<TikTokIntegration>(`/api/tenants/${tenantId}/tiktok`),
   connectTikTok: (tenantId: string) => request<InstagramConnectUrlResponse>(`/api/tenants/${tenantId}/tiktok/connect`, { method: 'POST', body: JSON.stringify({}) }),
   disconnectTikTok: (tenantId: string) => request<TikTokIntegration>(`/api/tenants/${tenantId}/tiktok`, { method: 'DELETE' }),
@@ -763,6 +751,13 @@ export const api = {
     request<BotSettings>(`/api/tenants/${tenantId}/bot-settings`, {
       method: 'PUT',
       body: JSON.stringify(payload)
+    }),
+  botPrompt: (tenantId: string) =>
+    request<AdminBotPrompt>(`/api/tenants/${tenantId}/bot-prompt`),
+  updateBotPrompt: (tenantId: string, payload: { system_prompt: string; title?: string }) =>
+    request<AdminBotPrompt>(`/api/tenants/${tenantId}/bot-prompt`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
     }),
   adminBotPrompt: (tenantId: string) =>
     request<AdminBotPrompt>(`/api/admin/tenants/${tenantId}/bot-prompt`),

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Leaf, LogOut } from 'lucide-react';
+import { Leaf, LogOut } from 'lucide-react';
 import type { CurrentUser } from '../../api';
 import { useI18n } from '../../i18n';
 
@@ -33,35 +33,43 @@ export function DashboardShell({
   navItems,
   activeNav,
   onNavChange,
-  collapsed = false,
-  onToggleCollapse,
   children,
 }: DashboardShellProps) {
   const { t } = useI18n();
   const activeLabel = navItems.find((item) => item.id === activeNav)?.label ?? title;
 
   return (
-    <div className="flex min-h-screen gap-[14px] bg-[#fffefc] p-[14px] text-[#222222] lg:p-[21px]">
-      <motion.aside
-        initial={{ opacity: 0, x: -12 }}
-        animate={{ opacity: 1, x: 0 }}
-        className={`sticky top-[14px] flex h-[calc(100vh-28px)] shrink-0 flex-col overflow-hidden rounded-[14px] bg-[#e1f4df] transition-[width] duration-200 lg:top-[21px] lg:h-[calc(100vh-42px)] ${
-          collapsed ? 'w-[72px]' : 'w-[72px] lg:w-[252px]'
-        }`}
-      >
-        <div className="flex min-h-[84px] items-center gap-[14px] border-b border-[#fffefc] px-[14px] lg:px-[18px]">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-[#0f3e17] text-[#fffefc]">
-            <Leaf size={22} strokeWidth={1.6} />
-          </span>
-          {!collapsed && (
-            <div className="hidden min-w-0 lg:block">
-              <p className="eyebrow-label truncate">{badge}</p>
-              <h1 className="mt-1 truncate text-[23px] leading-none text-[#0f3e17]">Codev</h1>
+    <div className="min-h-screen bg-[#f3faf5] text-[#18261d]">
+      <header className="sticky top-0 z-40 border-b border-[#e1ebe4] bg-white/95 backdrop-blur">
+        <div className="mx-auto flex min-h-20 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white">
+              <Leaf size={21} strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-lg font-bold tracking-[-0.03em] text-[#18261d]">Codev</p>
+              <p className="truncate text-xs font-medium text-[#708078]">{badge}</p>
             </div>
-          )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="hidden text-right sm:block">
+              <p className="max-w-64 truncate text-sm font-medium text-[#18261d]">{user.email}</p>
+              <p className="text-xs text-[#708078]">{user.role === 'admin' ? t('role.admin') : t('role.company')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label={t('action.logout')}
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-[#e1ebe4] bg-white px-4 text-sm font-medium text-[#708078] transition-colors hover:border-[#15803d] hover:bg-[#e4f5e9] hover:text-[#18261d]"
+            >
+              <LogOut size={17} />
+              <span className="hidden sm:inline">{t('action.logout')}</span>
+            </button>
+          </div>
         </div>
 
-        <nav className="flex-1 space-y-[7px] overflow-y-auto p-[9px] lg:p-[14px]">
+        <nav className="mx-auto flex max-w-[1200px] gap-2 overflow-x-auto px-4 pb-4 sm:px-6" aria-label="Workspace navigation">
           {navItems.map((item) => {
             const active = activeNav === item.id;
             return (
@@ -69,72 +77,34 @@ export function DashboardShell({
                 key={item.id}
                 type="button"
                 onClick={() => onNavChange(item.id)}
-                title={collapsed ? item.label : undefined}
-                className={`flex min-h-12 w-full items-center gap-[14px] rounded-[14px] px-[14px] text-sm transition-colors ${
+                className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors ${
                   active
-                    ? 'bg-[#0f3e17] text-[#fffefc]'
-                    : 'text-[#0f3e17] hover:bg-[#fffefc]'
-                } ${collapsed ? 'justify-center' : 'justify-center lg:justify-start'}`}
+                    ? 'bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white'
+                    : 'border border-[#e1ebe4] bg-white text-[#708078] hover:border-[#15803d] hover:bg-[#e4f5e9] hover:text-[#18261d]'
+                }`}
               >
                 <span className="shrink-0">{item.icon}</span>
-                {!collapsed && <span className="hidden truncate lg:block">{item.label}</span>}
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
+      </header>
 
-        <div className="border-t border-[#fffefc] p-[9px] lg:p-[14px]">
-          {onToggleCollapse && (
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              className="hidden min-h-11 w-full items-center justify-center gap-[9px] rounded-[14px] px-[14px] text-sm text-[#222222] transition-colors hover:bg-[#fffefc] hover:text-[#0f3e17] lg:flex"
-            >
-              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-              {!collapsed && <span>{t('action.collapse')}</span>}
-            </button>
-          )}
+      <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12">
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-[24px] border border-[#e1ebe4] bg-white p-6 sm:p-8"
+        >
+          <p className="eyebrow-label">Codev · {badge}</p>
+          <h1 className="mt-3 text-4xl font-bold leading-tight tracking-[-0.035em] sm:text-[44px]">
+            <span className="gradient-text">{activeLabel}</span>
+          </h1>
+          {subtitle && <p className="mt-4 max-w-2xl text-base leading-7 text-[#708078]">{subtitle}</p>}
+        </motion.section>
 
-          {!collapsed && (
-            <div className="mt-[9px] hidden rounded-[14px] bg-[#fffefc] p-[14px] lg:block">
-              <span className="block truncate text-sm font-normal text-[#0f3e17]">{user.email}</span>
-              <span className="mt-1 block text-[10px] uppercase tracking-[0.08em] text-[#222222]">
-                {user.role === 'admin' ? t('role.admin') : t('role.company')}
-              </span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={onLogout}
-            className={`mt-[9px] flex min-h-11 w-full items-center gap-[9px] rounded-[14px] px-[14px] text-sm text-[#222222] transition-colors hover:bg-[#fffefc] hover:text-[#0f3e17] ${
-              collapsed ? 'justify-center' : 'justify-center lg:justify-start'
-            }`}
-          >
-            <LogOut size={18} />
-            {!collapsed && <span className="hidden lg:block">{t('action.logout')}</span>}
-          </button>
-        </div>
-      </motion.aside>
-
-      <main className="min-w-0 flex-1 overflow-auto">
-        <div className="mx-auto max-w-[1200px] pb-[42px]">
-          <motion.header
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-[14px] rounded-[14px] bg-[#cfe7d3] p-7 lg:p-[42px]"
-          >
-            <div className="max-w-3xl">
-              <p className="eyebrow-label">Codev · {badge}</p>
-              <h2 className="mt-[11px] text-[40px] leading-[1.1] tracking-[-0.01em] text-[#0f3e17] lg:text-[56px] lg:tracking-[-0.03em]">
-                {activeLabel}
-              </h2>
-              {subtitle && <p className="mt-[14px] max-w-2xl text-sm font-light leading-6 text-[#222222]">{subtitle}</p>}
-            </div>
-          </motion.header>
-
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   );

@@ -8,15 +8,15 @@ type AlertProps = {
 };
 
 const alertPalette: Record<AlertType, string> = {
-  error: 'border-[#b6ced5] bg-[#b6ced5] text-[#0c2f10]',
-  success: 'border-[#cfe7d3] bg-[#e1f4df] text-[#0f3e17]',
-  info: 'border-[#cfe7d3] bg-[#e1f4df] text-[#0c2f10]',
+  error: 'border-[#d8e8dd] bg-[#d8e8dd] text-[#116932]',
+  success: 'border-[#e4f5e9] bg-[#e4f5e9] text-[#18261d]',
+  info: 'border-[#e4f5e9] bg-[#e4f5e9] text-[#116932]',
 };
 
 export function Alert({ type, children }: AlertProps) {
   return (
     <div
-      className={`rounded-[14px] border px-4 py-3 text-sm font-medium ${alertPalette[type]}`}
+      className={`rounded-[24px] border px-4 py-3 text-sm font-medium ${alertPalette[type]}`}
     >
       {children}
     </div>

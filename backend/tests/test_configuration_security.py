@@ -12,7 +12,6 @@ def test_configuration_has_no_embedded_provider_credentials() -> None:
         'TELEGRAM_BOT_TOKEN", "7',
         'OPENAI_API_KEY", "sk-',
         'ZERNIO_KEY", "sk_',
-        'REPLICATE_API_TOKEN", "r8_',
         'OBJECT_STORAGE_ACCESS_KEY_ID", "7',
         'OBJECT_STORAGE_SECRET_ACCESS_KEY", "8',
     )

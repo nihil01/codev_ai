@@ -276,18 +276,18 @@ export function CompanyInfo({
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-3">
-            <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]">
+            <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]">
               <Settings2 size={24} />
             </span>
               <div>
-                <h1 className="text-xl font-light text-[#0f3e17]">{t('companyInfo.title')}</h1>
-                <p className="mt-1 text-sm text-[#222222]">
+                <h1 className="text-xl font-light text-[#18261d]">{t('companyInfo.title')}</h1>
+                <p className="mt-1 text-sm text-[#18261d]">
                   Управляйте профилем компании, безопасностью и автоматизациями в одном месте.
                 </p>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#cfe7d3] bg-[#e1f4df] px-3 py-1.5 text-xs font-semibold text-[#0f3e17] sm:self-auto">
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#e4f5e9] bg-[#e4f5e9] px-3 py-1.5 text-xs font-semibold text-[#18261d] sm:self-auto">
               <CheckCircle2 size={15} />
               {companyId ? 'Компания подключена' : 'Компания не выбрана'}
             </div>
@@ -302,16 +302,16 @@ export function CompanyInfo({
               className={`${cardClass} xl:col-span-5`}
           >
             <div className="flex items-start gap-3">
-            <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]">
+            <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]">
               <Building2 size={22} />
             </span>
               <div>
-                <h2 className="text-xl font-light text-[#0f3e17]">{t('companyInfo.title')}</h2>
-                <p className="mt-1 text-sm text-[#222222]">Основные данные подключённой компании.</p>
+                <h2 className="text-xl font-light text-[#18261d]">{t('companyInfo.title')}</h2>
+                <p className="mt-1 text-sm text-[#18261d]">Основные данные подключённой компании.</p>
               </div>
             </div>
 
-            <div className="mt-5 divide-y divide-[#efeeeb] text-sm">
+            <div className="mt-5 divide-y divide-[#e1ebe4] text-sm">
               <InfoRow label="Email" value={email} />
               <InfoRow label="Instagram account id" value={instagramChannel?.external_account_id} mono />
               <InfoRow label="Display name" value={instagramChannel?.display_name} />
@@ -327,12 +327,12 @@ export function CompanyInfo({
               className={`${cardClass} space-y-5 xl:col-span-7`}
           >
             <div className="flex items-start gap-3">
-            <span className="rounded-[14px] bg-[#b1dbb8] p-3 text-[#0f3e17]">
+            <span className="rounded-[24px] bg-[#ffffff] p-3 text-[#18261d]">
               <KeyRound size={22} />
             </span>
               <div>
-                <h2 className="text-xl font-light text-[#0f3e17]">{t('companyInfo.passwordTitle')}</h2>
-                <p className="mt-1 text-sm text-[#222222]">Используйте пароль не короче 8 символов.</p>
+                <h2 className="text-xl font-light text-[#18261d]">{t('companyInfo.passwordTitle')}</h2>
+                <p className="mt-1 text-sm text-[#18261d]">Используйте пароль не короче 8 символов.</p>
               </div>
             </div>
 
@@ -391,12 +391,12 @@ export function CompanyInfo({
               className={`${cardClass} space-y-5 xl:col-span-8`}
           >
             <div className="flex items-start gap-3">
-            <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]">
+            <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]">
               <Store size={22} />
             </span>
               <div>
-                <h2 className="text-xl font-light text-[#0f3e17]">{t('companyInfo.preferencesTitle')}</h2>
-                <p className="mt-1 text-sm text-[#222222]">Настройте логику товаров и автоматических скидок.</p>
+                <h2 className="text-xl font-light text-[#18261d]">{t('companyInfo.preferencesTitle')}</h2>
+                <p className="mt-1 text-sm text-[#18261d]">Настройте логику товаров и автоматических скидок.</p>
               </div>
             </div>
 
@@ -447,15 +447,15 @@ export function CompanyInfo({
             </div>
 
             <label
-                className={`flex cursor-pointer items-center justify-between gap-4 rounded-[14px] border p-4 transition ${
+                className={`flex cursor-pointer items-center justify-between gap-4 rounded-[24px] border p-4 transition ${
                     supportsPerishableInventory
-                        ? 'border-[#b6ced5] bg-[#fffefc] hover:border-[#b6ced5]'
-                        : 'cursor-not-allowed border-[#efeeeb] bg-[#fffefc] opacity-70'
+                        ? 'border-[#d8e8dd] bg-[#ffffff] hover:border-[#d8e8dd]'
+                        : 'cursor-not-allowed border-[#e1ebe4] bg-[#ffffff] opacity-70'
                 }`}
             >
             <span>
-              <span className="block text-sm font-semibold text-[#0f3e17]">{t('companyInfo.enableAutoDiscount')}</span>
-              <span className="mt-1 block text-xs text-[#222222]">
+              <span className="block text-sm font-semibold text-[#18261d]">{t('companyInfo.enableAutoDiscount')}</span>
+              <span className="mt-1 block text-xs text-[#18261d]">
                 {supportsPerishableInventory
                     ? 'Автоматически применяет скидку к товарам с ограниченным сроком хранения.'
                     : 'Доступно для кондитерских, цветочных магазинов и кафе/ресторанов.'}
@@ -466,7 +466,7 @@ export function CompanyInfo({
                   checked={supportsPerishableInventory && autoDiscountEnabled}
                   disabled={!supportsPerishableInventory}
                   onChange={(event) => setAutoDiscountEnabled(event.target.checked)}
-                  className="h-5 w-5 rounded border-[#efeeeb] accent-[#0f3e17]"
+                  className="h-5 w-5 rounded border-[#e1ebe4] accent-[#18261d]"
               />
             </label>
 
@@ -488,26 +488,26 @@ export function CompanyInfo({
             className={`${cardClass} overflow-hidden`}
         >
           <div className="flex items-start gap-3">
-          <span className="rounded-[14px] bg-[#e1f4df] p-3 text-[#0f3e17]">
+          <span className="rounded-[24px] bg-[#e4f5e9] p-3 text-[#18261d]">
             <Bell size={22} />
           </span>
             <div>
-              <h2 className="text-xl font-light text-[#0f3e17]">{t('automation.reminderTitle')}</h2>
-              <p className="mt-1 text-sm text-[#222222]">{t('automation.reminderHint')}</p>
+              <h2 className="text-xl font-light text-[#18261d]">{t('automation.reminderTitle')}</h2>
+              <p className="mt-1 text-sm text-[#18261d]">{t('automation.reminderHint')}</p>
             </div>
           </div>
 
           {automationLoading ? (
-              <div className="mt-7 rounded-[14px] border border-dashed border-[#b6ced5] p-7">
+              <div className="mt-7 rounded-[24px] border border-dashed border-[#d8e8dd] p-7">
                 <Spinner label={t('automation.loading')} />
               </div>
           ) : (
               <div className="mt-6 grid gap-6 xl:grid-cols-12">
                 <div className="space-y-4 xl:col-span-7">
-                  <label className="flex cursor-pointer items-center justify-between gap-4 rounded-[14px] border border-[#efeeeb] p-4 transition hover:border-[#b6ced5]">
+                  <label className="flex cursor-pointer items-center justify-between gap-4 rounded-[24px] border border-[#e1ebe4] p-4 transition hover:border-[#d8e8dd]">
                 <span>
-                  <span className="block text-sm font-semibold text-[#0f3e17]">{t('automation.enableReminder')}</span>
-                  <span className="mt-1 block text-xs text-[#222222]">
+                  <span className="block text-sm font-semibold text-[#18261d]">{t('automation.enableReminder')}</span>
+                  <span className="mt-1 block text-xs text-[#18261d]">
                     Отправит мягкое напоминание, если клиент не отвечает.
                   </span>
                 </span>
@@ -515,7 +515,7 @@ export function CompanyInfo({
                         type="checkbox"
                         checked={automationSettings.client_reminder_enabled}
                         onChange={(event) => updateAutomationSettings({ client_reminder_enabled: event.target.checked })}
-                        className="h-5 w-5 rounded border-[#efeeeb] accent-[#0f3e17]"
+                        className="h-5 w-5 rounded border-[#e1ebe4] accent-[#18261d]"
                     />
                   </label>
 
@@ -545,31 +545,31 @@ export function CompanyInfo({
                     />
                   </Field>
 
-                  <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4">
+                  <div className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4">
                     <div className="flex items-start gap-3">
-                  <span className="rounded-[14px] bg-[#fffefc] p-2 text-[#0f3e17] ">
+                  <span className="rounded-[24px] bg-[#ffffff] p-2 text-[#18261d] ">
                     <MessageCircle size={18} />
                   </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[#0f3e17]">{t('automation.commentsTitle')}</p>
-                        <p className="mt-1 text-xs leading-5 text-[#222222]">{t('automation.commentsHint')}</p>
+                        <p className="text-sm font-semibold text-[#18261d]">{t('automation.commentsTitle')}</p>
+                        <p className="mt-1 text-xs leading-5 text-[#18261d]">{t('automation.commentsHint')}</p>
                       </div>
                     </div>
 
-                    <label className="mt-4 flex cursor-pointer items-center justify-between gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] px-3.5 py-3">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-[#0f3e17]">
-                    <CameraIcon size={17} className="text-[#0f3e17]" />
+                    <label className="mt-4 flex cursor-pointer items-center justify-between gap-4 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] px-3.5 py-3">
+                  <span className="flex items-center gap-2 text-sm font-semibold text-[#18261d]">
+                    <CameraIcon size={17} className="text-[#18261d]" />
                     {t('automation.enableInstagramComments')}
                   </span>
                       <input
                           type="checkbox"
                           checked={automationSettings.instagram_comments_enabled}
                           onChange={(event) => updateAutomationSettings({ instagram_comments_enabled: event.target.checked })}
-                          className="h-5 w-5 rounded border-[#efeeeb] accent-[#0f3e17]"
+                          className="h-5 w-5 rounded border-[#e1ebe4] accent-[#18261d]"
                       />
                     </label>
 
-                    <p className="mt-3 text-xs font-medium text-[#222222]">
+                    <p className="mt-3 text-xs font-medium text-[#18261d]">
                       {automationSettings.instagram_comments_enabled
                           ? t('automation.commentsOn')
                           : t('automation.commentsOff')}
@@ -579,7 +579,7 @@ export function CompanyInfo({
               </div>
           )}
 
-          <div className="mt-6 flex justify-end border-t border-[#efeeeb] pt-5">
+          <div className="mt-6 flex justify-end border-t border-[#e1ebe4] pt-5">
             <button
                 type="button"
                 onClick={saveAutomationSettings}

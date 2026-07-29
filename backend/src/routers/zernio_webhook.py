@@ -30,6 +30,7 @@ async def zernio_webhook_health(request: Request, path: str = "") -> Any:
             "instagram": "Instagram",
             "whatsapp": "WhatsApp",
             "tiktok": "TikTok",
+            "linkedin": "LinkedIn",
         }.get(platform, "Social network")
         safe_account_line = f"<p class='muted'>Account ID: <code>{safe_account_id}</code></p>" if safe_account_id else ""
         return HTMLResponse(

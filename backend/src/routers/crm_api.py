@@ -67,12 +67,6 @@ from services.object_storage import (
     normalize_public_object_url,
     upload_bytes_to_object_storage,
 )
-from services.replicate_video import (
-    create_product_video_prediction,
-    extract_replicate_prediction_id,
-    extract_replicate_video_url,
-    wait_for_prediction_output,
-)
 from services.subscriptions import (
     consume_usage,
     ensure_company_subscription,
@@ -91,6 +85,9 @@ from services.openai_messaging import (
 from services.whatsapp_cloud import disconnect_whatsapp_cloud_integration
 from services.zernio_integrator import (
     IntegratorZernio,
+    _extract_linkedin_account_id,
+    _extract_zernio_account_id,
+    _is_linkedin_account,
     disconnect_zernio_instagram_connected_accounts,
     disconnect_zernio_tiktok_connected_accounts,
     disconnect_zernio_whatsapp_connected_accounts,
@@ -926,6 +923,194 @@ async def connect_whatsapp_with_zernio(
 
 
 
+def _linkedin_response(tenant_id: uuid.UUID, connection: Mapping[str, Any] | None) -> LinkedInIntegrationResponse:
+    if not connection or connection.get("status") != "connected":
+        return LinkedInIntegrationResponse(tenant_id=str(tenant_id), connected=False)
+    metadata = connection.get("metadata")
+    if not isinstance(metadata, Mapping):
+        metadata = {}
+    zernio_account_id = str(metadata.get("zernio_account_id") or "").strip()
+    linkedin_account_id = str(connection.get("external_account_id") or "").strip()
+    if not zernio_account_id or not linkedin_account_id:
+        return LinkedInIntegrationResponse(tenant_id=str(tenant_id), connected=False)
+    return LinkedInIntegrationResponse(
+        tenant_id=str(tenant_id),
+        connected=True,
+        zernio_account_id=zernio_account_id,
+        linkedin_account_id=linkedin_account_id,
+        username=str(metadata.get("username") or "") or None,
+        display_name=str(connection.get("display_name") or metadata.get("displayName") or metadata.get("name") or "") or None,
+        connected_at=cast(datetime | None, connection.get("connected_at")),
+    )
+
+
+async def _linkedin_connection(db: AsyncSession, tenant_id: uuid.UUID) -> Mapping[str, Any] | None:
+    result = await db.execute(
+        text("select status, external_account_id, display_name, metadata, connected_at from social_posting_connections where company_id = :company_id and platform = 'linkedin' limit 1"),
+        {"company_id": tenant_id},
+    )
+    row = result.mappings().first()
+    return dict(row) if row else None
+
+
+async def _disable_linkedin_connection(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    await db.execute(
+        text(
+            "update social_posting_connections set status = 'disabled', external_account_id = null, display_name = null, "
+            "metadata = '{}'::jsonb, connected_at = null, updated_at = now() "
+            "where company_id = :company_id and platform = 'linkedin'"
+        ),
+        {"company_id": tenant_id},
+    )
+
+
+@router.get("/tenants/{tenant_id}/linkedin", response_model=LinkedInIntegrationResponse)
+async def get_linkedin_integration(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> LinkedInIntegrationResponse:
+    _assert_company_access(tenant_id, user)
+    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
+    if zernio_profile_id:
+        try:
+            accounts = await IntegratorZernio().get_connected_accounts(zernio_profile_id)
+            linkedin_accounts = [item for item in accounts if _is_linkedin_account(item)]
+            current_connection = await _linkedin_connection(db, tenant_id)
+            current_metadata = current_connection.get("metadata") if current_connection else None
+            preferred_account_id = str(current_metadata.get("zernio_account_id") or "") if isinstance(current_metadata, Mapping) else ""
+            account = next(
+                (item for item in linkedin_accounts if _extract_zernio_account_id(item) == preferred_account_id),
+                None,
+            )
+            if account is None and linkedin_accounts:
+                account = min(linkedin_accounts, key=_extract_zernio_account_id)
+            if account:
+                zernio_account_id = _extract_zernio_account_id(account)
+                linkedin_account_id = _extract_linkedin_account_id(account)
+                if not linkedin_account_id:
+                    await _disable_linkedin_connection(db, tenant_id)
+                    await db.commit()
+                    raise HTTPException(status_code=502, detail="Zernio LinkedIn account is missing a stable external identity")
+                display_name = account.get("displayName") or account.get("display_name") or account.get("name") or account.get("username")
+                metadata = dict(account)
+                metadata["zernio_account_id"] = zernio_account_id
+                conflict_result = await db.execute(
+                    text(
+                        """
+                        select company_id
+                        from social_posting_connections
+                        where platform = 'linkedin'
+                          and status = 'connected'
+                          and btrim(external_account_id) = :external_account_id
+                          and company_id <> :company_id
+                        limit 1
+                        """
+                    ),
+                    {"company_id": tenant_id, "external_account_id": linkedin_account_id},
+                )
+                if conflict_result.scalar_one_or_none():
+                    raise HTTPException(status_code=409, detail="LinkedIn account is already linked to another business")
+                await db.execute(
+                    text(
+                        """
+                        insert into social_posting_connections (company_id, platform, status, external_account_id, display_name, metadata, connected_at)
+                        values (:company_id, 'linkedin', 'connected', :external_account_id, :display_name, cast(:metadata as jsonb), now())
+                        on conflict (company_id, platform) do update set
+                            status = 'connected', external_account_id = excluded.external_account_id,
+                            display_name = excluded.display_name, metadata = excluded.metadata,
+                            connected_at = case
+                                when social_posting_connections.status <> 'connected'
+                                  or social_posting_connections.external_account_id is distinct from excluded.external_account_id
+                                then now()
+                                else coalesce(social_posting_connections.connected_at, now())
+                            end,
+                            updated_at = now()
+                        """
+                    ),
+                    {"company_id": tenant_id, "external_account_id": linkedin_account_id, "display_name": display_name, "metadata": json.dumps(metadata, ensure_ascii=False)},
+                )
+                await db.commit()
+            else:
+                await _disable_linkedin_connection(db, tenant_id)
+                await db.commit()
+        except HTTPException:
+            await db.rollback()
+            raise
+        except RuntimeError as exc:
+            await db.rollback()
+            await _disable_linkedin_connection(db, tenant_id)
+            await db.commit()
+            raise HTTPException(status_code=503, detail="LinkedIn connection status is temporarily unavailable") from exc
+        except Exception as exc:
+            await db.rollback()
+            await _disable_linkedin_connection(db, tenant_id)
+            await db.commit()
+            if "UniqueViolationError" in str(exc) or "duplicate key value" in str(exc):
+                raise HTTPException(status_code=409, detail="LinkedIn account is already linked to another business") from exc
+            logger.warning("Zernio LinkedIn accounts sync failed", exc_info=True)
+            raise HTTPException(status_code=502, detail="LinkedIn connection status could not be verified") from exc
+    else:
+        await _disable_linkedin_connection(db, tenant_id)
+        await db.commit()
+        raise HTTPException(status_code=409, detail="Zernio company profile is missing for this company")
+    return _linkedin_response(tenant_id, await _linkedin_connection(db, tenant_id))
+
+
+@router.post("/tenants/{tenant_id}/linkedin/connect", response_model=InstagramConnectUrlResponse)
+async def connect_linkedin_with_zernio(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> InstagramConnectUrlResponse:
+    _assert_company_access(tenant_id, user)
+    zernio_profile_id = await get_zernio_profile_id(db, tenant_id)
+    if not zernio_profile_id:
+        raise HTTPException(status_code=409, detail="Zernio company profile is missing for this company")
+    try:
+        auth_url = await IntegratorZernio().connect_social_network(
+            "linkedin", zernio_profile_id, redirect_url=_zernio_connect_redirect_url("linkedin", tenant_id)
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Zernio LinkedIn connect request failed") from exc
+    return InstagramConnectUrlResponse(auth_url=auth_url)
+
+
+@router.delete("/tenants/{tenant_id}/linkedin", response_model=LinkedInIntegrationResponse)
+async def disconnect_linkedin(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> LinkedInIntegrationResponse:
+    _assert_company_access(tenant_id, user)
+    connection = await _linkedin_connection(db, tenant_id)
+    metadata = connection.get("metadata") if connection else None
+    is_connected = bool(connection and connection.get("status") == "connected")
+    zernio_account_id = metadata.get("zernio_account_id") if is_connected and isinstance(metadata, Mapping) else None
+    if zernio_account_id:
+        try:
+            await _delete_zernio_accounts([str(zernio_account_id)], platform="linkedin")
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail="Zernio LinkedIn disconnect request failed") from exc
+    await db.execute(
+        text(
+            "update social_posting_connections set status = 'disabled', external_account_id = null, display_name = null, "
+            "metadata = '{}'::jsonb, connected_at = null, updated_at = now() "
+            "where company_id = :company_id and platform = 'linkedin'"
+        ),
+        {"company_id": tenant_id},
+    )
+    await db.commit()
+    return _linkedin_response(tenant_id, None)
+
+
+
 def _tiktok_response(tenant_id: uuid.UUID, account: Mapping[str, Any] | None, creator_info: Mapping[str, Any] | None = None) -> TikTokIntegrationResponse:
     if not account:
         return TikTokIntegrationResponse(tenant_id=str(tenant_id), connected=False)
@@ -1423,6 +1608,27 @@ async def update_bot_settings(
     )
 
 
+@router.get("/tenants/{tenant_id}/bot-prompt", response_model=AdminBotPromptResponse)
+async def get_company_bot_prompt(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> AdminBotPromptResponse:
+    _assert_company_access(tenant_id, user)
+    return await _load_admin_bot_prompt(db, tenant_id)
+
+
+@router.put("/tenants/{tenant_id}/bot-prompt", response_model=AdminBotPromptResponse)
+async def update_company_bot_prompt(
+    tenant_id: uuid.UUID,
+    payload: AdminBotPromptUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> AdminBotPromptResponse:
+    _assert_company_access(tenant_id, user)
+    return await _upsert_admin_bot_prompt(db, tenant_id, payload)
+
+
 @router.get("/admin/tenants/{tenant_id}/bot-prompt", response_model=AdminBotPromptResponse)
 async def get_admin_bot_prompt(
     tenant_id: uuid.UUID,
@@ -1529,6 +1735,7 @@ async def _upsert_admin_bot_prompt(
                 update instagram_system_prompts
                 set title = :title,
                     prompt_text = :prompt_text,
+                    version = version + 1,
                     updated_at = :now
                 where id = :prompt_id
                 """
@@ -1895,102 +2102,6 @@ async def upload_social_post_media(
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return SocialPostMediaUploadResponse(url=url, content_type=file.content_type, filename=file.filename or f"post-media{extension}")
-
-
-@router.post("/tenants/{tenant_id}/social-posts/replicate-product-video", response_model=ReplicateProductVideoResponse)
-async def create_replicate_product_video_post(
-    tenant_id: uuid.UUID,
-    payload: ReplicateProductVideoCreate,
-    db: AsyncSession = Depends(get_db),
-    user: UserClaims = Depends(get_current_user),
-) -> ReplicateProductVideoResponse:
-    _assert_company_access(tenant_id, user)
-    await require_autoposting(db, tenant_id)
-    if user.role != "company_user":
-        raise HTTPException(status_code=403, detail="Only business users can create AI video posts")
-    await consume_usage(db, tenant_id, "ai_video")
-    if payload.scheduled_for:
-        scheduled_for = payload.scheduled_for if payload.scheduled_for.tzinfo else payload.scheduled_for.replace(tzinfo=BAKU_TIMEZONE)
-        if scheduled_for.astimezone(BAKU_TIMEZONE) <= datetime.now(BAKU_TIMEZONE):
-            raise HTTPException(status_code=400, detail="Schedule time must be in the future by Baku time (GMT+4)")
-    product_result = await db.execute(
-        text(
-            """
-            select id, title, content, image_url
-            from company_knowledge_base_entries
-            where company_id = :company_id
-              and id = :product_id
-            limit 1
-            """
-        ),
-        {"company_id": tenant_id, "product_id": payload.product_id},
-    )
-    product = product_result.mappings().first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    image_url = str(product.get("image_url") or "").strip()
-    if not image_url:
-        raise HTTPException(status_code=400, detail="Selected product has no image for Replicate")
-    if not settings.replicate_api_token.strip():
-        raise HTTPException(status_code=503, detail="REPLICATE_API_TOKEN is not configured")
-    try:
-        replicate_response = await create_product_video_prediction(
-            api_token=settings.replicate_api_token,
-            model=settings.replicate_video_model,
-            image_url=image_url,
-            prompt=payload.prompt,
-            duration=payload.duration,
-            aspect_ratio=payload.aspect_ratio,
-            image_field=settings.replicate_video_image_field,
-        )
-        replicate_response = await wait_for_prediction_output(
-            api_token=settings.replicate_api_token,
-            prediction=replicate_response,
-        )
-    except httpx.HTTPStatusError as exc:
-        detail = exc.response.text[:1000] if exc.response is not None else str(exc)
-        raise HTTPException(status_code=502, detail=f"Replicate API failed: {detail}") from exc
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Replicate video generation failed: {exc}") from exc
-
-    task_id = extract_replicate_prediction_id(replicate_response)
-    video_url = extract_replicate_video_url(replicate_response)
-    if not video_url:
-        status = str(replicate_response.get("status") or "unknown")
-        error_detail = replicate_response.get("error")
-        raise HTTPException(status_code=502, detail=f"Replicate prediction did not return a video URL (status={status}, error={error_detail})")
-    media_urls = [video_url]
-    metadata = {
-        "source": "replicate_product_video",
-        "replicate_prediction_id": task_id,
-        "replicate_status": replicate_response.get("status"),
-        "product_id": str(payload.product_id),
-        "product_title": str(product["title"]),
-        "prompt": payload.prompt,
-        "replicate_response": dict(replicate_response),
-    }
-    drafts: list[SocialPostDraftResponse] = []
-    for platform in dict.fromkeys(payload.platforms):
-        row = await create_social_post_draft(
-            db,
-            tenant_id,
-            {
-                "platform": platform,
-                "title": payload.title or f"AI video: {product['title']}",
-                "caption": payload.caption,
-                "media_urls": media_urls,
-                "scheduled_for": None,
-                "status": "pending_review",
-                "metadata": metadata,
-            },
-        )
-        drafts.append(SocialPostDraftResponse(**row))
-    return ReplicateProductVideoResponse(
-        replicate_prediction_id=task_id,
-        video_url=video_url,
-        drafts=drafts,
-        replicate_response=dict(replicate_response),
-    )
 
 
 @router.post("/tenants/{tenant_id}/social-posts/{post_id}/publish", response_model=SocialPostDraftResponse)

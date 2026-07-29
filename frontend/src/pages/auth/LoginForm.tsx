@@ -57,15 +57,15 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   return (
     <form onSubmit={handleLogin} className="space-y-6">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#0f3e17]">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#15803d]">
           {t('auth.companyFormEyebrow')}
         </p>
 
-        <h2 className="mt-3 text-3xl font-light tracking-tight text-[#0f3e17]">
+        <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#18261d]">
           {t('auth.companyLogin')}
         </h2>
 
-        <p className="mt-2 text-sm leading-6 text-[#222222]">
+        <p className="mt-2 text-sm leading-6 text-[#708078]">
           {t('auth.companyFormHint')}
         </p>
       </div>

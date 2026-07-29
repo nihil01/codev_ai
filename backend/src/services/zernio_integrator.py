@@ -16,7 +16,7 @@ from config.app_config import settings
 
 logger = logging.getLogger(__name__)
 
-SocialNetwork = Literal["instagram", "whatsapp", "tiktok"]
+SocialNetwork = Literal["instagram", "whatsapp", "tiktok", "linkedin"]
 
 
 def _jsonable(value: Any) -> Any:
@@ -70,7 +70,9 @@ def _extract_account_profile_id(account_payload: Mapping[str, Any]) -> str | Non
 def _extract_connected_accounts_payload(result: Any) -> list[dict[str, Any]]:
     payload = _jsonable(result)
     if isinstance(payload, Mapping):
-        accounts = payload.get("accounts") or payload.get("data") or payload.get("items") or []
+        accounts = next((payload[key] for key in ("accounts", "data", "items") if key in payload), None)
+        if accounts is None:
+            raise ValueError("Zernio list_accounts response does not contain accounts list")
     else:
         accounts = payload
 
@@ -79,8 +81,9 @@ def _extract_connected_accounts_payload(result: Any) -> list[dict[str, Any]]:
 
     normalized_accounts: list[dict[str, Any]] = []
     for account in accounts:
-        if isinstance(account, Mapping):
-            normalized_accounts.append(dict(account))
+        if not isinstance(account, Mapping):
+            raise ValueError("Zernio list_accounts response contains malformed account entry")
+        normalized_accounts.append(dict(account))
     return normalized_accounts
 
 
@@ -100,11 +103,15 @@ def _is_tiktok_account(account_payload: Mapping[str, Any]) -> bool:
     return _account_platform(account_payload) in {"tiktok", "tik_tok", "tik-tok"}
 
 
+def _is_linkedin_account(account_payload: Mapping[str, Any]) -> bool:
+    return _account_platform(account_payload) in {"linkedin", "linked_in", "linked-in"}
+
+
 def _extract_zernio_account_id(account_payload: Mapping[str, Any]) -> str:
-    account_id = account_payload.get("_id") or account_payload.get("id") or account_payload.get("account_id")
+    account_id = str(account_payload.get("_id") or account_payload.get("id") or account_payload.get("account_id") or "").strip()
     if not account_id:
         raise ValueError("Zernio connected account does not contain account id")
-    return str(account_id)
+    return account_id
 
 
 def _extract_instagram_account_id(account_payload: Mapping[str, Any]) -> str | None:
@@ -135,6 +142,24 @@ def _extract_tiktok_account_id(account_payload: Mapping[str, Any]) -> str | None
         or account_payload.get("user_id")
     )
     return str(account_id) if account_id else None
+
+
+def _extract_linkedin_account_id(account_payload: Mapping[str, Any]) -> str | None:
+    account_id = (
+        account_payload.get("linkedinAccountId")
+        or account_payload.get("linkedInAccountId")
+        or account_payload.get("linkedin_account_id")
+        or account_payload.get("organizationId")
+        or account_payload.get("organization_id")
+        or account_payload.get("personUrn")
+        or account_payload.get("person_urn")
+        or account_payload.get("externalAccountId")
+        or account_payload.get("external_account_id")
+        or account_payload.get("userId")
+        or account_payload.get("user_id")
+    )
+    normalized_id = str(account_id or "").strip()
+    return normalized_id or None
 
 
 def _extract_whatsapp_account_id(account_payload: Mapping[str, Any]) -> str | None:

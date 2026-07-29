@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   Send,
   LayoutDashboard,
+  Link2,
 } from 'lucide-react';
 import { WhatsAppIcon, InstagramIcon, TikTokIcon } from '../../components/ui/SocialIcons';
 import { DashboardOverview } from '../../components/charts/DashboardCharts';
@@ -23,9 +24,11 @@ import { ChatExplorer } from './ChatExplorer';
 import { ContactsPanel } from './ContactsPanel';
 import { CustomerOrders } from './CustomerOrders';
 import { CompanyInfo } from './CompanyInfo';
+import { BotPromptSettings } from './BotPromptSettings';
 import { InstagramComments } from './InstagramComments';
 import { InstagramSettings } from './InstagramSettings';
 import { KnowledgeBase } from './KnowledgeBase';
+import { LinkedInSettings } from './LinkedInSettings';
 import { ManagersAndBroadcasts } from './ManagersAndBroadcasts';
 import { PostsSchedulerPanel } from './PostsSchedulerPanel';
 import { TikTokSettings } from './TikTokSettings';
@@ -39,7 +42,7 @@ type CompanyDashboardProps = {
   onLogout: () => void;
 };
 
-type CompanySection = 'overview' | 'contacts' | 'orders' | 'comments' | 'instagram' | 'whatsapp' | 'tiktok' | 'posts' | 'knowledge' | 'managers' | 'conversations' | 'settings';
+type CompanySection = 'overview' | 'contacts' | 'orders' | 'comments' | 'instagram' | 'whatsapp' | 'linkedin' | 'tiktok' | 'posts' | 'knowledge' | 'managers' | 'conversations' | 'settings';
 
 export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashboardProps) {
   const { t } = useI18n();
@@ -94,6 +97,7 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
       { id: 'comments', label: t('tabs.comments'), icon: <MessageSquare size={18} /> },
       { id: 'instagram', label: t('tabs.instagram'), icon: <InstagramIcon size={18} /> },
       { id: 'whatsapp', label: t('tabs.whatsapp'), icon: <WhatsAppIcon size={18} /> },
+      { id: 'linkedin', label: 'LinkedIn', icon: <Link2 size={18} /> },
       { id: 'tiktok', label: t('tabs.tiktok'), icon: <TikTokIcon size={18} /> },
       { id: 'posts', label: t('tabs.posts'), icon: <Send size={18} /> },
       { id: 'knowledge', label: t('tabs.knowledge'), icon: <BookOpen size={18} /> },
@@ -108,6 +112,7 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
         
         item.id === 'instagram' ||
         item.id === 'whatsapp' ||
+        item.id === 'linkedin' ||
         item.id === 'tiktok' ||
         item.id === 'posts' ||
         item.id === 'settings',
@@ -310,10 +315,12 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
         );
       case 'whatsapp':
         return <WhatsAppSettings companyId={companyId} onActivationChange={applyWhatsAppActivation} />;
+      case 'linkedin':
+        return <LinkedInSettings companyId={companyId} onError={setError} onNotice={setNotice} />;
       case 'tiktok':
         return <TikTokSettings companyId={companyId} setError={setError} setNotice={setNotice} />;
       case 'posts':
-        return <PostsSchedulerPanel companyId={companyId} products={knowledgeEntries} onError={setError} onNotice={setNotice} />;
+        return <PostsSchedulerPanel companyId={companyId} onError={setError} onNotice={setNotice} />;
       case 'knowledge':
         return (
           <KnowledgeBase
@@ -341,6 +348,7 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
               onError={setError}
               onNotice={setNotice}
             />
+            <BotPromptSettings companyId={companyId} onError={setError} onNotice={setNotice} />
           </div>
         );
     }
@@ -359,13 +367,13 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
       onToggleCollapse={() => setCollapsed(!collapsed)}
     >
       {!dashboardReady ? (
-        <div className="rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-8">
+        <div className="rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <Spinner label={t('company.loading')} />
             <div className="grid flex-1 gap-3 sm:grid-cols-3">
-              <div className="h-12 rounded-[14px] bg-[#e1f4df]" />
-              <div className="h-12 rounded-[14px] bg-[#e1f4df]/60" />
-              <div className="h-12 rounded-[14px] bg-[#e1f4df]/30" />
+              <div className="h-12 rounded-[24px] bg-[#e4f5e9]" />
+              <div className="h-12 rounded-[24px] bg-[#e4f5e9]/60" />
+              <div className="h-12 rounded-[24px] bg-[#e4f5e9]/30" />
             </div>
           </div>
         </div>

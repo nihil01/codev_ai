@@ -58,13 +58,13 @@ export function InstagramSettings({
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xl font-light text-[#0f3e17]">{t('instagram.title')}</h2>
+          <h2 className="text-xl font-light text-[#18261d]">{t('instagram.title')}</h2>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <span
             className={`w-fit rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
-              instagramActivated ? 'bg-[#e1f4df] text-[#0f3e17]' : 'bg-[#b1dbb8] text-[#0f3e17]'
+              instagramActivated ? 'bg-[#e4f5e9] text-[#18261d]' : 'bg-[#ffffff] text-[#18261d]'
             }`}
           >
             {instagramActivated ? t('instagram.connected') : t('instagram.notConnected')}
@@ -73,10 +73,10 @@ export function InstagramSettings({
           <span
             className={`w-fit rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${
               !instagramActivated
-                ? 'bg-[#e1f4df] text-[#222222]'
+                ? 'bg-[#e4f5e9] text-[#18261d]'
                 : instagramEnabled
-                  ? 'bg-[#b6ced5] text-[#0f3e17]'
-                  : 'bg-[#e1f4df] text-[#222222]'
+                  ? 'bg-[#d8e8dd] text-[#18261d]'
+                  : 'bg-[#e4f5e9] text-[#18261d]'
             }`}
           >
             {!instagramActivated ? t('instagram.botUnavailable') : instagramEnabled ? t('instagram.botActive') : t('instagram.botOff')}
@@ -84,44 +84,44 @@ export function InstagramSettings({
         </div>
       </div>
 
-      <div className="mt-5 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5">
-        <div className="grid gap-3 text-sm text-[#222222] sm:grid-cols-3">
+      <div className="mt-5 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5">
+        <div className="grid gap-3 text-sm text-[#18261d] sm:grid-cols-3">
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('common.status')}</span>
-            <span className="mt-1 block font-semibold text-[#0f3e17]">{statusText}</span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#18261d]">{t('common.status')}</span>
+            <span className="mt-1 block font-semibold text-[#18261d]">{statusText}</span>
           </div>
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('instagram.account')}</span>
-            <span className="mt-1 block break-all font-semibold text-[#0f3e17]">{accountLabel}</span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#18261d]">{t('instagram.account')}</span>
+            <span className="mt-1 block break-all font-semibold text-[#18261d]">{accountLabel}</span>
           </div>
 
           <div>
-            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('instagram.profileId')}</span>
-            <span className="mt-1 block break-all font-semibold text-[#0f3e17]">{profileUserId || '—'}</span>
+            <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#18261d]">{t('instagram.profileId')}</span>
+            <span className="mt-1 block break-all font-semibold text-[#18261d]">{profileUserId || '—'}</span>
           </div>
         </div>
 
         {instagramActivated && (
-          <div className="mt-5 flex flex-col gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-4 sm:flex-row sm:items-center">
+          <div className="mt-5 flex flex-col gap-4 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4 sm:flex-row sm:items-center">
             {integration?.profile_picture_url && (
               <img
                 src={integration.profile_picture_url}
                 alt={profileUsername ? `@${profileUsername}` : t('instagram.profileName')}
-                className="h-16 w-16 rounded-[14px] object-cover ring-1 ring-[#efeeeb]"
+                className="h-16 w-16 rounded-[24px] object-cover ring-1 ring-[#e1ebe4]"
               />
             )}
 
             <div className="grid flex-1 gap-3 text-sm sm:grid-cols-3">
               <div>
-                <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">{t('instagram.profileName')}</span>
-                <span className="mt-1 block break-all font-semibold text-[#0f3e17]">{profileName || '—'}</span>
+                <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#18261d]">{t('instagram.profileName')}</span>
+                <span className="mt-1 block break-all font-semibold text-[#18261d]">{profileName || '—'}</span>
               </div>
 
               <div>
-                <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#222222]">Username</span>
-                <span className="mt-1 block break-all font-semibold text-[#0f3e17]">
+                <span className="block text-xs font-semibold uppercase tracking-[0.06em] text-[#18261d]">Username</span>
+                <span className="mt-1 block break-all font-semibold text-[#18261d]">
                   {profileUsername ? `@${profileUsername}` : '—'}
                 </span>
               </div>
@@ -131,7 +131,7 @@ export function InstagramSettings({
       </div>
 
       {!instagramActivated && (
-        <div className="mt-5 rounded-[14px] border border-[#efeeeb] bg-[#b1dbb8] p-5 text-[#0f3e17]">
+        <div className="mt-5 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5 text-[#18261d]">
           <h3 className="text-lg font-light">{t('instagram.missingTitle')}</h3>
 
           <button
@@ -144,15 +144,15 @@ export function InstagramSettings({
           </button>
 
           {!companyId && (
-            <p className="mt-3 text-xs font-semibold text-[#0f3e17]">{t('instagram.noCompany')}</p>
+            <p className="mt-3 text-xs font-semibold text-[#18261d]">{t('instagram.noCompany')}</p>
           )}
         </div>
       )}
 
       {instagramActivated && (
-        <div className="mt-5 grid gap-4 rounded-[14px] border border-[#efeeeb] bg-[#fffefc] p-5 md:grid-cols-[1fr_auto] md:items-center">
+        <div className="mt-5 grid gap-4 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <h3 className="text-lg font-light text-[#0f3e17]">{t('instagram.manageTitle')}</h3>
+            <h3 className="text-lg font-light text-[#18261d]">{t('instagram.manageTitle')}</h3>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col">

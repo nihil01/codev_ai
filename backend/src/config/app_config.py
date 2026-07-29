@@ -25,10 +25,6 @@ class Settings(BaseSettings):
     zernio_api_key: str = os.getenv("ZERNIO_API_KEY", os.getenv("ZERNIO_KEY", ""))
     zernio_webhook_secret: str = os.getenv("ZERNIO_WEBHOOK_SEC", "")
 
-    replicate_api_token: str = os.getenv("REPLICATE_API_KEY", os.getenv("REPLICATE_API_TOKEN", ""))
-    replicate_video_model: str = os.getenv("REPLICATE_VIDEO_MODEL", "xai/grok-imagine-video")
-    replicate_video_image_field: str = os.getenv("REPLICATE_VIDEO_IMAGE_FIELD", "start_image")
-
     database_url: str = os.getenv(
         "DATABASE_URL",
         "postgresql+asyncpg://codev:codev@localhost:5465/codev",

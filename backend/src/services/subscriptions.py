@@ -7,19 +7,17 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 PackageCode = Literal["basic", "full"]
-UsageKind = Literal["text_message", "voice_message", "ai_video"]
+UsageKind = Literal["text_message", "voice_message"]
 
 PACKAGE_LIMITS: dict[str, dict[str, int | None | bool]] = {
     "basic": {
         "monthly_text_messages_limit": 4000,
         "monthly_voice_messages_limit": 1000,
-        "monthly_ai_videos_limit": 0,
         "autoposting_enabled": False,
     },
     "full": {
         "monthly_text_messages_limit": None,
         "monthly_voice_messages_limit": None,
-        "monthly_ai_videos_limit": 50,
         "autoposting_enabled": True,
     },
 }
@@ -44,12 +42,12 @@ async def ensure_company_subscription(db: AsyncSession, company_id: uuid.UUID | 
             """
             insert into company_subscriptions (
                 company_id, package_code, monthly_text_messages_limit,
-                monthly_voice_messages_limit, monthly_ai_videos_limit,
-                autoposting_enabled, access_locked, created_at, updated_at
+                monthly_voice_messages_limit, autoposting_enabled,
+                access_locked, created_at, updated_at
             ) values (
                 :company_id, :package_code, :text_limit,
-                :voice_limit, :ai_video_limit,
-                :autoposting_enabled, false, now(), now()
+                :voice_limit, :autoposting_enabled,
+                false, now(), now()
             )
             on conflict (company_id) do update set
                 updated_at = company_subscriptions.updated_at
@@ -61,7 +59,6 @@ async def ensure_company_subscription(db: AsyncSession, company_id: uuid.UUID | 
             "package_code": package,
             "text_limit": limits["monthly_text_messages_limit"],
             "voice_limit": limits["monthly_voice_messages_limit"],
-            "ai_video_limit": limits["monthly_ai_videos_limit"],
             "autoposting_enabled": limits["autoposting_enabled"],
         },
     )
@@ -94,20 +91,18 @@ async def update_company_subscription(
             """
             insert into company_subscriptions (
                 company_id, package_code, monthly_text_messages_limit,
-                monthly_voice_messages_limit, monthly_ai_videos_limit,
-                autoposting_enabled, access_locked, locked_reason,
-                locked_at, created_at, updated_at
+                monthly_voice_messages_limit, autoposting_enabled,
+                access_locked, locked_reason, locked_at, created_at, updated_at
             ) values (
                 :company_id, :package_code, :text_limit,
-                :voice_limit, :ai_video_limit,
-                :autoposting_enabled, :access_locked, :locked_reason,
+                :voice_limit, :autoposting_enabled,
+                :access_locked, :locked_reason,
                 case when :access_locked then now() else null end, now(), now()
             )
             on conflict (company_id) do update set
                 package_code = excluded.package_code,
                 monthly_text_messages_limit = excluded.monthly_text_messages_limit,
                 monthly_voice_messages_limit = excluded.monthly_voice_messages_limit,
-                monthly_ai_videos_limit = excluded.monthly_ai_videos_limit,
                 autoposting_enabled = excluded.autoposting_enabled,
                 access_locked = excluded.access_locked,
                 locked_reason = excluded.locked_reason,
@@ -121,7 +116,6 @@ async def update_company_subscription(
             "package_code": package,
             "text_limit": limits["monthly_text_messages_limit"],
             "voice_limit": limits["monthly_voice_messages_limit"],
-            "ai_video_limit": limits["monthly_ai_videos_limit"],
             "autoposting_enabled": limits["autoposting_enabled"],
             "access_locked": access_locked,
             "locked_reason": locked_reason,
@@ -138,8 +132,7 @@ async def get_monthly_usage(db: AsyncSession, company_id: uuid.UUID | str, perio
             """
             select
                 coalesce(sum(text_messages_used), 0)::int as text_messages_used,
-                coalesce(sum(voice_messages_used), 0)::int as voice_messages_used,
-                coalesce(sum(ai_videos_used), 0)::int as ai_videos_used
+                coalesce(sum(voice_messages_used), 0)::int as voice_messages_used
             from company_usage_counters
             where company_id = :company_id and usage_period = :usage_period
             """
@@ -147,7 +140,7 @@ async def get_monthly_usage(db: AsyncSession, company_id: uuid.UUID | str, perio
         {"company_id": company_id, "usage_period": usage_period},
     )
     row = result.mappings().one()
-    return {"text_messages_used": int(row["text_messages_used"]), "voice_messages_used": int(row["voice_messages_used"]), "ai_videos_used": int(row["ai_videos_used"])}
+    return {"text_messages_used": int(row["text_messages_used"]), "voice_messages_used": int(row["voice_messages_used"])}
 
 
 def is_voice_payload(payload: Mapping[str, Any] | None, explicit_message_type: str | None = None) -> bool:
@@ -179,7 +172,6 @@ async def increment_usage(db: AsyncSession, company_id: uuid.UUID | str, kind: U
     column = {
         "text_message": "text_messages_used",
         "voice_message": "voice_messages_used",
-        "ai_video": "ai_videos_used",
     }[kind]
     await db.execute(
         text(
@@ -209,14 +201,10 @@ async def check_usage_available(db: AsyncSession, company_id: uuid.UUID | str, k
         limit = subscription.get("monthly_text_messages_limit")
         used = usage["text_messages_used"]
         label = "monthly text messages"
-    elif kind == "voice_message":
+    else:
         limit = subscription.get("monthly_voice_messages_limit")
         used = usage["voice_messages_used"]
         label = "monthly voice messages"
-    else:
-        limit = subscription.get("monthly_ai_videos_limit")
-        used = usage["ai_videos_used"]
-        label = "monthly AI videos"
     if limit is not None and used >= int(limit):
         raise HTTPException(status_code=402, detail=f"Package limit reached: {label} ({used}/{limit})")
     return subscription
@@ -241,7 +229,6 @@ def subscription_response(subscription: Mapping[str, Any], usage: Mapping[str, i
         "package_code": str(subscription["package_code"]),
         "monthly_text_messages_limit": subscription.get("monthly_text_messages_limit"),
         "monthly_voice_messages_limit": subscription.get("monthly_voice_messages_limit"),
-        "monthly_ai_videos_limit": subscription.get("monthly_ai_videos_limit"),
         "autoposting_enabled": bool(subscription.get("autoposting_enabled")),
         "access_locked": bool(subscription.get("access_locked")),
         "locked_reason": subscription.get("locked_reason"),
@@ -249,7 +236,6 @@ def subscription_response(subscription: Mapping[str, Any], usage: Mapping[str, i
         "usage_period": current_period(),
         "text_messages_used": int(usage.get("text_messages_used", 0)),
         "voice_messages_used": int(usage.get("voice_messages_used", 0)),
-        "ai_videos_used": int(usage.get("ai_videos_used", 0)),
         "created_at": subscription.get("created_at"),
         "updated_at": subscription.get("updated_at"),
     }

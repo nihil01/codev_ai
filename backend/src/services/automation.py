@@ -63,6 +63,26 @@ def automation_settings_row(row: Mapping[str, Any], *, tenant_id: uuid.UUID) -> 
     }
 
 
+async def _linkedin_connection_is_valid(db: AsyncSession, tenant_id: uuid.UUID) -> bool:
+    result = await db.execute(
+        text(
+            """
+            select exists (
+                select 1
+                from social_posting_connections
+                where company_id = :tenant_id
+                  and platform = 'linkedin'
+                  and status = 'connected'
+                  and nullif(btrim(coalesce(external_account_id, '')), '') is not null
+                  and nullif(btrim(coalesce(metadata->>'zernio_account_id', '')), '') is not null
+            )
+            """
+        ),
+        {"tenant_id": tenant_id},
+    )
+    return bool(result.scalar_one())
+
+
 async def load_automation_settings(db: AsyncSession, tenant_id: uuid.UUID) -> dict[str, Any]:
     result = await db.execute(
         text(
@@ -76,9 +96,9 @@ async def load_automation_settings(db: AsyncSession, tenant_id: uuid.UUID) -> di
         {"tenant_id": tenant_id},
     )
     row = result.mappings().first()
-    if row:
-        return automation_settings_row(dict(row), tenant_id=tenant_id)
-    return automation_settings_row({}, tenant_id=tenant_id)
+    settings = dict(row) if row else {}
+    settings["linkedin_connected"] = await _linkedin_connection_is_valid(db, tenant_id)
+    return automation_settings_row(settings, tenant_id=tenant_id)
 
 
 async def upsert_automation_settings(db: AsyncSession, tenant_id: uuid.UUID, payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -117,7 +137,6 @@ async def upsert_automation_settings(db: AsyncSession, tenant_id: uuid.UUID, pay
                 client_reminder_message = excluded.client_reminder_message,
                 autoposting_enabled = excluded.autoposting_enabled,
                 instagram_comments_enabled = excluded.instagram_comments_enabled,
-                linkedin_connected = excluded.linkedin_connected,
                 tiktok_connected = excluded.tiktok_connected,
                 content_calendar_enabled = excluded.content_calendar_enabled,
                 flower_price_adaptation_enabled = excluded.flower_price_adaptation_enabled,
@@ -133,39 +152,38 @@ async def upsert_automation_settings(db: AsyncSession, tenant_id: uuid.UUID, pay
             "client_reminder_message": reminder_message,
             "autoposting_enabled": bool(payload.get("autoposting_enabled", False)),
             "instagram_comments_enabled": bool(payload.get("instagram_comments_enabled", True)),
-            "linkedin_connected": bool(payload.get("linkedin_connected", False)),
+            "linkedin_connected": False,
             "tiktok_connected": bool(payload.get("tiktok_connected", False)),
             "content_calendar_enabled": bool(payload.get("content_calendar_enabled", False)),
             "flower_price_adaptation_enabled": bool(payload.get("flower_price_adaptation_enabled", False)),
             "default_event_reminder_hours": int(payload.get("default_event_reminder_hours") or 24),
         },
     )
-    row = result.mappings().one()
-    await _sync_social_connection_placeholders(db, tenant_id, bool(payload.get("linkedin_connected", False)), bool(payload.get("tiktok_connected", False)))
+    row = dict(result.mappings().one())
+    await _sync_tiktok_connection_placeholder(db, tenant_id, bool(payload.get("tiktok_connected", False)))
+    row["linkedin_connected"] = await _linkedin_connection_is_valid(db, tenant_id)
     await db.commit()
-    return automation_settings_row(dict(row), tenant_id=tenant_id)
+    return automation_settings_row(row, tenant_id=tenant_id)
 
 
-async def _sync_social_connection_placeholders(db: AsyncSession, tenant_id: uuid.UUID, linkedin: bool, tiktok: bool) -> None:
-    for platform, enabled in (("linkedin", linkedin), ("tiktok", tiktok)):
-        await db.execute(
-            text(
-                """
-                insert into social_posting_connections (company_id, platform, status, connected_at)
-                values (:company_id, :platform, :status, case when :is_connected then now() else null end)
-                on conflict (company_id, platform) do update set
-                    status = excluded.status,
-                    connected_at = case when :is_connected then coalesce(social_posting_connections.connected_at, now()) else null end,
-                    updated_at = now()
-                """
-            ),
-            {
-                "company_id": tenant_id,
-                "platform": platform,
-                "status": "connected" if enabled else "planned",
-                "is_connected": enabled,
-            },
-        )
+async def _sync_tiktok_connection_placeholder(db: AsyncSession, tenant_id: uuid.UUID, enabled: bool) -> None:
+    await db.execute(
+        text(
+            """
+            insert into social_posting_connections (company_id, platform, status, connected_at)
+            values (:company_id, 'tiktok', :status, case when :is_connected then now() else null end)
+            on conflict (company_id, platform) do update set
+                status = excluded.status,
+                connected_at = case when :is_connected then coalesce(social_posting_connections.connected_at, now()) else null end,
+                updated_at = now()
+            """
+        ),
+        {
+            "company_id": tenant_id,
+            "status": "connected" if enabled else "planned",
+            "is_connected": enabled,
+        },
+    )
 
 
 def social_connection_row(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -424,7 +442,29 @@ async def _account_for_social_post(db: AsyncSession, tenant_id: uuid.UUID, platf
         return result.mappings().first()
     if platform == "tiktok":
         return await get_latest_zernio_tiktok_connected_account(db, tenant_id)
+    if platform == "linkedin":
+        result = await db.execute(
+            text(
+                """
+                select metadata->>'zernio_account_id' as zernio_account_id,
+                       coalesce(display_name, external_account_id, metadata->>'zernio_account_id') as display_name
+                from social_posting_connections
+                where company_id = :company_id
+                  and platform = 'linkedin'
+                  and status = 'connected'
+                  and btrim(coalesce(external_account_id, '')) <> ''
+                  and btrim(coalesce(metadata->>'zernio_account_id', '')) <> ''
+                limit 1
+                """
+            ),
+            {"company_id": tenant_id},
+        )
+        return result.mappings().first()
     return None
+
+
+def _zernio_platform_payload(platform: str, zernio_account_id: str) -> list[dict[str, str]]:
+    return [{"platform": platform, "accountId": zernio_account_id}]
 
 
 def _media_type_for_url(url: str) -> str:
@@ -461,13 +501,15 @@ async def publish_social_post_draft(db: AsyncSession, tenant_id: uuid.UUID, draf
     if not account:
         raise ValueError(f"No connected {platform} account for autoposting")
 
-    zernio_account_id = str(account["zernio_account_id"])
+    zernio_account_id = str(account.get("zernio_account_id") or "").strip()
+    if not zernio_account_id:
+        raise ValueError(f"No connected {platform} account for autoposting")
     media_urls = row.get("media_urls") or []
     if platform == "tiktok" and not media_urls:
         raise ValueError("TikTok autoposting requires at least one public video/photo URL")
 
     media_items = [{"type": _media_type_for_url(str(url)), "url": str(url)} for url in media_urls]
-    platforms = [{"platform": platform, "accountId": zernio_account_id, "account_id": zernio_account_id}]
+    platforms = _zernio_platform_payload(platform, zernio_account_id)
     scheduled_for = row.get("scheduled_for") if not publish_now else None
     tiktok_settings = _default_tiktok_settings() if platform == "tiktok" else None
 
