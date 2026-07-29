@@ -344,6 +344,31 @@ export type BusinessAnalytics = {
   top_customers?: Array<{ customer_id: string; customer_label: string; orders_count: number; items_count: number; message_count?: number; revenue: string }>;
 };
 
+export type MessageActivityCustomer = {
+  customer_id: string;
+  customer_label: string;
+  channel: 'instagram' | 'whatsapp';
+  message_count: number;
+  today_message_count: number;
+  last_message_at?: string | null;
+};
+
+export type MessageActivity = {
+  tenant_id: string;
+  date_from: string;
+  date_to: string;
+  total_messages: number;
+  inbound_messages: number;
+  outbound_messages: number;
+  active_customers: number;
+  today_messages: number;
+  today_customers_count: number;
+  daily_activity: Array<{ date: string; inbound: number; outbound: number; active_customers: number }>;
+  channel_activity: Array<{ channel: 'instagram' | 'whatsapp'; inbound: number; outbound: number; active_customers: number }>;
+  top_customers: MessageActivityCustomer[];
+  today_customers: MessageActivityCustomer[];
+};
+
 export type OrderStatus = 'new' | 'sent_to_manager' | 'accepted' | 'paid' | 'completed' | 'cancelled' | 'done';
 export type VisibleOrderStatus = 'paid' | 'cancelled';
 
@@ -618,6 +643,13 @@ export const api = {
       body: JSON.stringify(payload)
     }),
   businessAnalytics: (tenantId: string) => request<BusinessAnalytics>(`/api/tenants/${tenantId}/analytics`),
+  messageActivity: (tenantId: string, params?: { from?: string; to?: string }, signal?: AbortSignal) => {
+    const query = new URLSearchParams();
+    if (params?.from) query.set('date_from', params.from);
+    if (params?.to) query.set('date_to', params.to);
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    return request<MessageActivity>(`/api/tenants/${tenantId}/message-activity${suffix}`, { signal });
+  },
   automationSettings: (tenantId: string) => request<AutomationSettings>(`/api/tenants/${tenantId}/automation-settings`),
   updateAutomationSettings: (tenantId: string, payload: AutomationSettings) =>
     request<AutomationSettings>(`/api/tenants/${tenantId}/automation-settings`, {

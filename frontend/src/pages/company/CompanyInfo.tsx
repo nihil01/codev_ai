@@ -105,7 +105,6 @@ export function CompanyInfo({
             </span>
             <div>
               <h2 className="text-xl font-light text-[#18261d]">{t('companyInfo.title')}</h2>
-              <p className="mt-1 text-sm text-[#18261d]">Основные данные подключённой компании.</p>
             </div>
           </div>
 
@@ -130,7 +129,6 @@ export function CompanyInfo({
             </span>
             <div>
               <h2 className="text-xl font-light text-[#18261d]">{t('companyInfo.passwordTitle')}</h2>
-              <p className="mt-1 text-sm text-[#18261d]">Используйте пароль не короче 8 символов.</p>
             </div>
           </div>
 

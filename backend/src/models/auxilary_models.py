@@ -624,6 +624,45 @@ class BusinessAnalyticsResponse(BaseModel):
     top_customers: list[dict[str, str | int]] = Field(default_factory=list)
 
 
+class MessageActivityDay(BaseModel):
+    date: str
+    inbound: int
+    outbound: int
+    active_customers: int
+
+
+class MessageActivityChannel(BaseModel):
+    channel: Literal["instagram", "whatsapp"]
+    inbound: int
+    outbound: int
+    active_customers: int
+
+
+class MessageActivityCustomer(BaseModel):
+    customer_id: str
+    customer_label: str
+    channel: Literal["instagram", "whatsapp"]
+    message_count: int
+    today_message_count: int
+    last_message_at: datetime | None = None
+
+
+class MessageActivityResponse(BaseModel):
+    tenant_id: str
+    date_from: str
+    date_to: str
+    total_messages: int
+    inbound_messages: int
+    outbound_messages: int
+    active_customers: int
+    today_messages: int
+    today_customers_count: int
+    daily_activity: list[MessageActivityDay] = Field(default_factory=list)
+    channel_activity: list[MessageActivityChannel] = Field(default_factory=list)
+    top_customers: list[MessageActivityCustomer] = Field(default_factory=list)
+    today_customers: list[MessageActivityCustomer] = Field(default_factory=list)
+
+
 class InstagramCommentResponse(BaseModel):
     id: str
     company_id: str

@@ -170,45 +170,43 @@ def generate_reply(
     try:
         if not system_prompt:
             logger.warning("System prompt is empty; fallback message returned")
-            return "Please, contact the account owner, I can not proceed your request now"
+            return "Hazırda sorğunu emal edə bilmirəm. Zəhmət olmasa, hesab sahibi ilə əlaqə saxlayın."
 
         full_system_prompt = system_prompt
 
         if knowledge_context:
             full_system_prompt += (
                 "\n\n"
-                "Фактическая база знаний компании ниже. Используй ее как источник конкретных данных бизнеса. "
-                "Не смешивай эти данные с правилами поведения. "
-                "Если в базе знаний нет ответа, честно скажи, что уточнишь у менеджера.\n\n"
-                f"БАЗА ЗНАНИЙ:\n{knowledge_context}"
+                "Şirkətin faktiki bilik bazası aşağıdadır. Konkret biznes məlumatları üçün yalnız bu mənbədən istifadə et. "
+                "Bu faktları davranış qaydaları ilə qarışdırma. "
+                "Cavab bilik bazasında yoxdursa, məlumatı menecerdən dəqiqləşdirəcəyini dürüst şəkildə bildir.\n\n"
+                f"BİLİK BAZASI:\n{knowledge_context}"
             )
 
         if order_intent:
             full_system_prompt += (
                 "\n\n"
-                "ДАННЫЕ ПО НАМЕРЕНИЮ ЗАКАЗА:\n"
-                f"Клиент хочет оформить заказ: {order_intent.wants_order}\n"
-                f"Заказ готов к передаче менеджеру: {order_intent.ready_to_submit}\n"
-                f"Язык клиента: {order_intent.detected_language}\n"
-                f"Товар: {order_intent.product_title}\n"
-                f"Цена: {order_intent.product_price}\n"
-                f"Количество: {order_intent.quantity}\n"
-                f"Имя клиента: {order_intent.customer_name}\n"
-                f"Телефон клиента: {order_intent.customer_phone}\n"
-                f"Нужна доставка: {order_intent.delivery_required}\n"
-                f"Адрес доставки: {order_intent.delivery_address}\n"
-                f"Время доставки: {order_intent.delivery_time}\n"
-                f"Комментарий: {order_intent.comment}\n"
-                f"Недостающие поля: {', '.join(order_intent.missing_fields) if order_intent.missing_fields else 'нет'}\n"
-                f"Следующий вопрос клиенту: {order_intent.next_question}\n\n"
-                "Правила работы с заказом:\n"
-                "1. Если клиент хочет оформить заказ, но данных не хватает, задай только нужный уточняющий вопрос.\n"
-                "2. Если next_question заполнен, используй его как основу ответа клиенту.\n"
-                "3. Если заказ готов к передаче менеджеру, подтверди клиенту, что заказ принят и менеджер скоро свяжется.\n"
-                "4. Отвечай на том же языке, на котором пишет клиент.\n"
-                "5. Не придумывай имя, телефон, адрес, цену или товар.\n"
-                "6. Отвечай на языке клиента, указанном в пункте 4.\n"
-
+                "SİFARİŞ NİYYƏTİ BARƏDƏ MƏLUMAT:\n"
+                f"Müştəri sifariş vermək istəyir: {order_intent.wants_order}\n"
+                f"Sifariş menecerə ötürülməyə hazırdır: {order_intent.ready_to_submit}\n"
+                f"Müştərinin dili: {order_intent.detected_language}\n"
+                f"Məhsul: {order_intent.product_title}\n"
+                f"Qiymət: {order_intent.product_price}\n"
+                f"Miqdar: {order_intent.quantity}\n"
+                f"Müştərinin adı: {order_intent.customer_name}\n"
+                f"Müştərinin telefonu: {order_intent.customer_phone}\n"
+                f"Çatdırılma lazımdır: {order_intent.delivery_required}\n"
+                f"Çatdırılma ünvanı: {order_intent.delivery_address}\n"
+                f"Çatdırılma vaxtı: {order_intent.delivery_time}\n"
+                f"Şərh: {order_intent.comment}\n"
+                f"Çatışmayan sahələr: {', '.join(order_intent.missing_fields) if order_intent.missing_fields else 'yoxdur'}\n"
+                f"Müştəriyə növbəti sual: {order_intent.next_question}\n\n"
+                "Sifarişlə işləmə qaydaları:\n"
+                "1. Müştəri sifariş vermək istəyirsə, lakin məlumat çatışmırsa, yalnız lazım olan dəqiqləşdirici sualı ver.\n"
+                "2. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
+                "3. Sifariş menecerə ötürülməyə hazırdırsa, sifarişin qəbul edildiyini və menecerin tezliklə əlaqə saxlayacağını bildir.\n"
+                "4. Yalnız Azərbaycan dilində cavab ver.\n"
+                "5. Ad, telefon, ünvan, qiymət və ya məhsul barədə məlumat uydurma.\n"
             )
 
         messages: list[dict[str, str]] = [

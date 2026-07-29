@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 BAKU_TIMEZONE = timezone(timedelta(hours=4))
 
 DEFAULT_REMINDER_MESSAGE = (
-    "Здравствуйте! Хотели мягко напомнить о нашем диалоге. "
-    "Если вопрос ещё актуален — напишите, мы рядом и поможем."
+    "Salam! Söhbətimizi nəzakətlə xatırlatmaq istədik. "
+    "Mövzu hələ aktualdırsa, bizə yazın — kömək etməyə hazırıq."
 )
 
 
@@ -712,23 +712,22 @@ async def autopost_worker(*, interval_seconds: int = 300, stop_event: asyncio.Ev
 
 # ─── Contextual Reminder Generation ──────────────────────────────────
 
-REMINDER_SYSTEM_PROMPT = """Ты — вежливый AI-ассистент компании. Твоя задача — написать короткое, дружелюбное напоминание клиенту, который перестал отвечать.
+REMINDER_SYSTEM_PROMPT = """Sən şirkətin nəzakətli AI köməkçisisən. Məqsədin cavab verməyi dayandırmış müştəriyə qısa və səmimi xatırlatma yazmaqdır.
 
-Правила:
-1. Напоминание должно быть на том же языке, на котором клиент вел диалог
-2. Будь мягким и ненавязчивым
-3. Ссылайся на контекст предыдущего разговора
-4. Не продавай активно — просто напомни о себе
-5. Длина: 1-2 предложения, максимум 150 символов
-6. Не используй шаблонные фразы типа "Здравствуйте, хотели напомнить"
-7. Начни по-человечески, как будто продолжение разговора
+Qaydalar:
+1. Yalnız Azərbaycan dilində cavab ver
+2. Yumşaq və israrsız üslubdan istifadə et
+3. Əvvəlki söhbətin kontekstinə əsaslan
+4. Aqressiv satış etmə, sadəcə söhbəti nəzakətlə davam etdir
+5. Mətn 1-2 cümlə və ən çox 150 simvol olsun
+6. Şablon və süni səslənən ifadələrdən istifadə etmə
+7. Söhbətin təbii davamı kimi başla
 
-Примеры хороших напоминаний:
-- "Салам! Dəyərli müştərimiz, əgər sualınız varsa, biz hələ də buradayıq 💬"
-- "Здравствуйте! Если остались вопросы по нашему разговору — пишите, поможем 😊"
-- "Hello! Just checking in — if you need anything, we're here to help!"
+Yaxşı xatırlatma nümunələri:
+- "Salam! Sualınız qalıbsa, biz buradayıq və məmnuniyyətlə kömək edərik 💬"
+- "Salam! Əvvəlki söhbətimizlə bağlı əlavə sualınız varsa, yaza bilərsiniz 😊"
 
-Формат ответа: только текст напоминания, без кавычек и пояснений."""
+Cavab formatı: yalnız xatırlatma mətni, dırnaq və izah olmadan."""
 
 
 async def generate_contextual_reminder(
@@ -752,22 +751,15 @@ async def generate_contextual_reminder(
         if not history:
             return default_message
 
-        # Detect language from conversation
-        last_messages = " ".join([msg["content"] for msg in history[-3:]])
-        detected_lang = _detect_language(last_messages)
-
-        # Build context for AI
         history_text = "\n".join([
-            f"{'Клиент' if msg['role'] == 'user' else 'Бот'}: {msg['content']}"
+            f"{'Müştəri' if msg['role'] == 'user' else 'Köməkçi'}: {msg['content']}"
             for msg in history[-6:]
         ])
 
-        user_prompt = f"""Контекст диалога:
+        user_prompt = f"""Dialoqun konteksti:
 {history_text}
 
-Язык клиента: {detected_lang}
-
-Напиши короткое напоминание на языке клиента (1-2 предложения). Ссылайся на контекст разговора."""
+Yalnız Azərbaycan dilində 1-2 cümləlik qısa xatırlatma yaz. Dialoqun kontekstinə uyğun cavab ver."""
 
         reminder = generate_reply(
             system_prompt=REMINDER_SYSTEM_PROMPT,
@@ -780,35 +772,14 @@ async def generate_contextual_reminder(
             reminder = reminder[:197] + "..."
 
         logger.info(
-            "Generated contextual reminder company_id=%s channel=%s lang=%s",
-            company_id, channel, detected_lang,
+            "Generated contextual reminder company_id=%s channel=%s",
+            company_id, channel,
         )
         return reminder
 
     except Exception as exc:
         logger.error("Failed to generate contextual reminder: %s", exc)
         return default_message
-
-
-def _detect_language(text: str) -> str:
-    """Simple language detection based on character patterns."""
-    text_lower = text.lower()
-
-    # Azerbaijani indicators
-    az_indicators = ["ə", "ö", "ü", "ç", "ş", "ğ", "ı", "salam", "siz", "biz", "bu"]
-    az_score = sum(1 for w in az_indicators if w in text_lower)
-
-    # Russian indicators
-    ru_indicators = ["ы", "э", "ъ", "щ", "здравствуйте", "спасибо", "пожалуйста", "хорошо"]
-    ru_score = sum(1 for w in ru_indicators if w in text_lower)
-
-    # English indicators
-    en_indicators = ["the", "is", "are", "was", "hello", "thank", "please", "how"]
-    en_score = sum(1 for w in en_indicators if w in text_lower)
-
-    scores = {"az": az_score, "ru": ru_score, "en": en_score}
-    return max(scores, key=scores.get) if max(scores.values()) > 0 else "az"
-
 async def process_client_reminders_once(db: AsyncSession) -> int:
     instagram_candidates = await db.execute(
         text(

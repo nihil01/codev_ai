@@ -61,10 +61,8 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
     error,
     setError,
     instagramChannel,
-    stats,
     businessSettings,
     setBusinessSettings,
-    businessAnalytics,
     refreshBusinessAnalytics,
   } = useCompany(companyId);
 
@@ -283,11 +281,8 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
         return (
           <DashboardOverview
             companyId={companyId}
-            userEmail={user.email}
-            businessAnalytics={businessAnalytics}
             igActivated={instagramActivated}
             wpActivated={whatsappActivated}
-            stats={stats}
           />
         );
       case 'contacts':
@@ -361,6 +356,7 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
       navItems={navItems}
       activeNav={activeSection}
       onNavChange={(id) => setActiveSection(id as CompanySection)}
+      hidePageHeader={activeSection === 'overview'}
       collapsed={collapsed}
       onToggleCollapse={() => setCollapsed(!collapsed)}
     >

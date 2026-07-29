@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.auxilary_models import *
+from services.prompt_defaults import DEFAULT_SYSTEM_PROMPT_AZ
 from services.subscriptions import check_usage_available, increment_usage, is_voice_payload
 from services.security import validate_text_message, MAX_TEXT_LENGTH
 
@@ -48,8 +49,15 @@ async def get_company_runtime(session: AsyncSession, instagram_account_id: str) 
         from instagram_companies c
         join users u on u.instagram_company_id = c.id and u.ig_activated = true and u.is_active = true
         join instagram_tokens t on t.company_id = c.id and t.is_active = true
-        left join instagram_system_prompts p on p.company_id = c.id
+        left join lateral (
+            select prompt_text
+            from instagram_system_prompts
+            where company_id = c.id
+            order by version desc, updated_at desc
+            limit 1
+        ) p on true
         where c.instagram_account_id = :id
+        limit 1
         """
     )
 
@@ -57,7 +65,7 @@ async def get_company_runtime(session: AsyncSession, instagram_account_id: str) 
         query,
         {
             "id": instagram_account_id,
-            "default_prompt": "Ты AI-ассистент компании в Instagram Direct. Отвечай коротко, дружелюбно и по делу.",
+            "default_prompt": DEFAULT_SYSTEM_PROMPT_AZ,
         },
     )
     company = result.mappings().first()

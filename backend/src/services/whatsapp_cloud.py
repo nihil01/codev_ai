@@ -18,6 +18,7 @@ from services.customer_orders import create_customer_order
 from services.knowledge_base import build_knowledge_context, find_relevant_knowledge_entries
 from services.manager_notifications import notify_managers_about_order
 from services.openai_messaging import detect_order_intent, generate_reply, hydrate_order_intent_customer_fields
+from services.prompt_defaults import DEFAULT_SYSTEM_PROMPT_AZ
 from services.subscriptions import check_usage_available, increment_usage, is_voice_payload
 from services.voice_transcription import transcribe_whatsapp_cloud_audio
 
@@ -389,7 +390,7 @@ async def get_whatsapp_cloud_runtime_by_phone_number(
         ),
         {
             "phone_number_id": phone_number_id,
-            "default_prompt": "Ты AI-ассистент компании в WhatsApp. Отвечай коротко, дружелюбно и по делу.",
+            "default_prompt": DEFAULT_SYSTEM_PROMPT_AZ,
         },
     )
     row = result.mappings().first()

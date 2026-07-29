@@ -19,6 +19,7 @@ type DashboardShellProps = {
   navItems: NavItem[];
   activeNav: string;
   onNavChange: (id: string) => void;
+  hidePageHeader?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   children: ReactNode;
@@ -32,6 +33,7 @@ export function DashboardShell({
   navItems,
   activeNav,
   onNavChange,
+  hidePageHeader = false,
   children,
 }: DashboardShellProps) {
   const { t } = useI18n();
@@ -89,16 +91,18 @@ export function DashboardShell({
       </header>
 
       <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 sm:px-6 sm:py-12">
-        <motion.section
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 rounded-[24px] border border-[#e1ebe4] bg-white p-6 sm:p-8"
-        >
-          <h1 className="text-4xl font-bold leading-tight tracking-[-0.035em] sm:text-[44px]">
-            <span className="gradient-text">{activeLabel}</span>
-          </h1>
-          {subtitle && <p className="mt-4 max-w-2xl text-base leading-7 text-[#708078]">{subtitle}</p>}
-        </motion.section>
+        {!hidePageHeader && (
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-[28px] border border-[#e1ebe4] bg-white px-6 py-8 sm:px-8 sm:py-10"
+          >
+            <h1 className="text-4xl font-bold leading-tight tracking-[-0.035em] sm:text-[44px]">
+              <span className="gradient-text">{activeLabel}</span>
+            </h1>
+            {subtitle && <p className="mt-4 max-w-2xl text-base leading-7 text-[#708078]">{subtitle}</p>}
+          </motion.section>
+        )}
 
         {children}
       </main>

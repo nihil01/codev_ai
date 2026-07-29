@@ -1,7 +1,7 @@
 import json
 import logging
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal, Mapping, cast
@@ -54,6 +54,7 @@ from services.manager_notifications import (
     update_company_manager,
     upsert_company_manager,
 )
+from services.message_activity import load_message_activity
 from services.knowledge_base import (
     create_photo_knowledge_entry,
     create_text_knowledge_entry,
@@ -82,6 +83,7 @@ from services.openai_messaging import (
     generate_reply,
     normalize_product_description_language,
 )
+from services.prompt_defaults import DEFAULT_SYSTEM_PROMPT_AZ
 from services.whatsapp_cloud import disconnect_whatsapp_cloud_integration
 from services.zernio_integrator import (
     IntegratorZernio,
@@ -114,11 +116,9 @@ router = APIRouter(prefix="/api", tags=["crm"])
 logger = logging.getLogger(__name__)
 BAKU_TIMEZONE = timezone(timedelta(hours=4))
 
-DEFAULT_SYSTEM_PROMPT = (
-    "Ты AI-ассистент компании в Instagram Direct. "
-    "Отвечай коротко, дружелюбно и по делу. "
-    "Если вопрос непонятен — задай уточняющий вопрос."
-)
+DEFAULT_SYSTEM_PROMPT = DEFAULT_SYSTEM_PROMPT_AZ
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -2896,6 +2896,32 @@ async def update_customer_order(
         raise HTTPException(status_code=404, detail="Order not found")
     await db.commit()
     return _order_row(row)
+
+
+@router.get("/tenants/{tenant_id}/message-activity", response_model=MessageActivityResponse)
+async def get_message_activity(
+    tenant_id: uuid.UUID,
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> MessageActivityResponse:
+    _assert_company_access(tenant_id, user)
+    today = datetime.now(BAKU_TIMEZONE).date()
+    selected_to = date_to or today
+    selected_from = date_from or (selected_to - timedelta(days=13))
+    if selected_from > selected_to:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to")
+    if (selected_to - selected_from).days > 89:
+        raise HTTPException(status_code=422, detail="Date range cannot exceed 90 days")
+
+    activity = await load_message_activity(
+        db,
+        tenant_id=tenant_id,
+        date_from=selected_from,
+        date_to=selected_to,
+    )
+    return MessageActivityResponse(**activity)
 
 
 @router.get("/tenants/{tenant_id}/analytics", response_model=BusinessAnalyticsResponse)
