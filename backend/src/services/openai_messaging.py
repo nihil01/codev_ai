@@ -188,6 +188,7 @@ def generate_reply(
                 "\n\n"
                 "KURS MARAĞI BARƏDƏ MƏLUMAT:\n"
                 f"Müştəri kursla maraqlanır: {order_intent.wants_order}\n"
+                f"Müştəri menecerlə əlaqəyə razıdır: {order_intent.manager_handoff_requested}\n"
                 f"Müraciət menecerə ötürülməyə hazırdır: {order_intent.ready_to_submit}\n"
                 f"Müştərinin dili: {order_intent.detected_language}\n"
                 f"Maraqlandığı kurs: {order_intent.product_title}\n"
@@ -198,11 +199,16 @@ def generate_reply(
                 f"Çatışmayan sahələr: {', '.join(order_intent.missing_fields) if order_intent.missing_fields else 'yoxdur'}\n"
                 f"Müştəriyə növbəti sual: {order_intent.next_question}\n\n"
                 "Kurs müraciəti ilə işləmə qaydaları:\n"
-                "1. Konkret kurs məlum deyilsə, yalnız hansı kursun maraqlandırdığını soruş.\n"
-                "2. Say, çatdırılma, ünvan, ad və telefon soruşma.\n"
-                "3. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
-                "4. Müraciət hazırdırsa, məlumatın menecerə ötürüldüyünü və tezliklə əlaqə saxlanacağını bildir.\n"
-                "5. Yalnız Azərbaycan dilində cavab ver və kurs barədə fakt uydurma.\n"
+                "1. Müştərinin son sualına əvvəlcə birbaşa və təbii cavab ver; əvvəlki cavabı təkrarlama.\n"
+                "2. Müştəri sadəcə kursun adını yazıbsa, bilik bazasındakı uyğun məlumatı qısa təqdim et və nəyi öyrənmək istədiyini soruş.\n"
+                "3. Proqram, qiymət, qrafik, müddət, format, sayt və digər sualları menecerə yönləndirmədən özün cavablandır.\n"
+                "4. Cavab bilik bazasında yoxdursa, bunu dürüst bildir və yalnız onda menecerin əlaqə saxlamasını istəyib-istəmədiyini soruş.\n"
+                "5. Müştəri qeydiyyata hazırdırsa, fərdi konsultasiya istəyirsə və ya söhbətdə təbii ehtiyac yaranıbsa, "
+                "menecerin əlaqə saxlamasını təklif et və sual formasında açıq razılıq gözlə.\n"
+                "6. Açıq razılıq olmadan müraciətin menecerə ötürüldüyünü demə. Hər cavabda menecer təklifini təkrarlama.\n"
+                "7. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
+                "8. Say, çatdırılma, ünvan, ad və telefon soruşma.\n"
+                "9. Yalnız Azərbaycan dilində cavab ver və kurs barədə fakt uydurma.\n"
             )
 
         messages: list[dict[str, str]] = [
@@ -275,7 +281,8 @@ def hydrate_order_intent_customer_fields(
     """Normalize a legacy order-intent payload into a course lead.
 
     Platform identity is sufficient to contact the lead. Name and phone are useful
-    metadata but are never required. The only required lead field is the course.
+    metadata but are never required. A lead becomes submittable only when a course
+    is known and the customer has explicitly requested or accepted manager contact.
     Legacy commerce fields are explicitly cleared so downstream code cannot revive
     quantity or delivery questions from an inconsistent model response.
     """
@@ -295,7 +302,7 @@ def hydrate_order_intent_customer_fields(
 
     if data.get("product_title"):
         data["missing_fields"] = []
-        data["ready_to_submit"] = True
+        data["ready_to_submit"] = bool(data.get("manager_handoff_requested"))
         data["next_question"] = None
     else:
         data["missing_fields"] = ["product_title"]

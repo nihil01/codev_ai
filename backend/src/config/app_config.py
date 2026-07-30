@@ -70,22 +70,30 @@ class Settings(BaseSettings):
     Rules:
     1. Detect the customer's language and put its ISO code into detected_language (az, ru, or en).
     2. Set wants_order=true when the customer asks about a specific course, its price, schedule,
-       duration, format, enrollment, or otherwise shows interest in studying that course.
-    3. A generic request such as "which courses do you have?" is also course interest, but the
-       lead is not ready until the customer chooses a specific course.
-    4. Set ready_to_submit=true as soon as a specific course_title is known. Platform identity is
-       enough for the manager to contact the customer; name and phone are optional.
-    5. If the course is unclear, missing_fields must contain only "product_title" and
-       next_question must ask only which course interests the customer, in the customer's language.
-    6. Use the knowledge base to identify the course title and price. Never invent facts.
-    7. Never ask for quantity, delivery, address, customer name, or phone.
-    8. Always return quantity, delivery_required, delivery_address, and delivery_time as null.
-    9. When ready_to_submit=true, missing_fields must be empty and next_question must be null.
-    10. Preserve useful customer wishes (for example evening group or online format) in comment.
+       syllabus, duration, format, enrollment, or otherwise shows interest in studying that course.
+    3. A generic request such as "which courses do you have?" is also course interest, but keep
+       product_title null until a specific course is known.
+    4. Set manager_handoff_requested=true only when the latest customer message explicitly asks
+       to speak with a manager, asks to be called/contacted, or explicitly agrees to be contacted by a manager
+       after the assistant offered this. A bare "yes" counts only when the previous assistant message clearly
+       offered manager contact. When manager_handoff_requested=true and the course is present in history,
+       also set wants_order=true and carry that course into product_title. Do not treat merely naming a course
+       or asking about its syllabus, price, schedule, website, or format as manager consent.
+    5. Set ready_to_submit=true only when a specific course_title is known AND
+       manager_handoff_requested=true. Otherwise ready_to_submit=false.
+    6. If the course is unclear, missing_fields must contain only "product_title" and next_question
+       must ask only which course interests the customer, in the customer's language.
+    7. If the course is known but manager consent was not given, missing_fields must be empty and
+       next_question must be null. The conversational assistant will answer the customer's question.
+    8. Use the knowledge base to identify the course title and price. Never invent facts.
+    9. Never ask for quantity, delivery, address, customer name, or phone. Name and phone are optional.
+    10. Always return quantity, delivery_required, delivery_address, and delivery_time as null.
+    11. Preserve useful customer wishes (for example evening group or online format) in comment.
 
     JSON shape:
     {
       "wants_order": boolean,
+      "manager_handoff_requested": boolean,
       "ready_to_submit": boolean,
       "confidence": number,
       "detected_language": string | null,
