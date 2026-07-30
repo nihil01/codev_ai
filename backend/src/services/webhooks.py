@@ -9,7 +9,6 @@ from services.chat_runtime import (
     persist_message,
 )
 from services.customer_orders import create_customer_order
-from services.business_features import build_inventory_unavailable_reply, find_order_stock_conflict
 from services.manager_notifications import notify_managers_about_order
 from services.instagram_messaging import send_message
 from services.knowledge_base import build_knowledge_context, find_relevant_knowledge_entries
@@ -29,19 +28,14 @@ from services.conversation_control import (
 logger = logging.getLogger(__name__)
 
 def build_order_confirmation_message(language: str | None) -> str:
-    if language == "az":
-        return (
-            "Təşəkkür edirik, sifarişiniz qəbul olundu. "
-            "Menecer tezliklə sizinlə əlaqə saxlayacaq."
-        )
+    normalized = (language or "").strip().lower()
+    if normalized.startswith("az") or "azerbaijani" in normalized:
+        return "Təşəkkür edirik. Kurs müraciətiniz menecerə ötürüldü. Menecer tezliklə sizinlə əlaqə saxlayacaq."
 
-    if language == "ru":
-        return (
-            "Спасибо, заказ принят. "
-            "Менеджер скоро свяжется с вами для подтверждения."
-        )
+    if normalized.startswith("ru") or "russian" in normalized:
+        return "Спасибо. Ваша заявка по курсу передана менеджеру. Менеджер скоро свяжется с вами."
 
-    return "Thank you, your order has been accepted. A manager will contact you soon."
+    return "Thank you. Your course request was sent to a manager, who will contact you soon."
 
 
 async def handle_message(
@@ -151,12 +145,6 @@ async def handle_message(
         customer_name=customer_name_from_profile or customer_username,
         customer_phone=None,
     )
-    stock_conflict = find_order_stock_conflict(
-        product_title=order_intent.product_title,
-        requested_quantity=order_intent.quantity,
-        knowledge_entries=knowledge_entries,
-    )
-
     logger.info(
         "Order intent detected mid=%s wants_order=%s ready_to_submit=%s missing_fields=%s",
         mid,
@@ -202,16 +190,7 @@ async def handle_message(
         logger.info("Instagram conversation handed off to manager conversation_id=%s intent=%s", conversation_uuid, intent)
         return
 
-    if order_intent.wants_order and stock_conflict:
-        product_title, requested_quantity, available_quantity = stock_conflict
-        reply = build_inventory_unavailable_reply(
-            language=order_intent.detected_language,
-            product_title=product_title,
-            requested_quantity=requested_quantity,
-            available_quantity=available_quantity,
-        )
-
-    elif order_intent.wants_order and not order_intent.ready_to_submit and order_intent.next_question:
+    if order_intent.wants_order and not order_intent.ready_to_submit and order_intent.next_question:
         reply = order_intent.next_question
 
     elif order_intent.wants_order and order_intent.ready_to_submit:

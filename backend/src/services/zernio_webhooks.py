@@ -10,7 +10,6 @@ from typing import Any, Literal, TypedDict, cast
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.business_features import build_inventory_unavailable_reply, find_order_stock_conflict
 from services.chat_runtime import fetch_recent_chat_history, persist_message
 from services.customer_orders import create_customer_order
 from services.knowledge_base import build_knowledge_context, find_relevant_knowledge_entries
@@ -806,11 +805,6 @@ async def build_zernio_ai_reply(
         customer_name=customer_name,
         customer_phone=customer_phone,
     )
-    stock_conflict = find_order_stock_conflict(
-        product_title=order_intent.product_title,
-        requested_quantity=order_intent.quantity,
-        knowledge_entries=knowledge_entries,
-    )
     intent, intent_confidence = classify_intent_from_order_intent(order_intent, text_message)
     await update_message_intent(
         db,
@@ -847,15 +841,6 @@ async def build_zernio_ai_reply(
         await db.commit()
         logger.info("Zernio conversation handed off to manager conversation_id=%s intent=%s", conversation_id, intent)
         return None
-
-    if order_intent.wants_order and stock_conflict:
-        product_title, requested_quantity, available_quantity = stock_conflict
-        return build_inventory_unavailable_reply(
-            language=order_intent.detected_language,
-            product_title=product_title,
-            requested_quantity=requested_quantity,
-            available_quantity=available_quantity,
-        )
 
     if order_intent.wants_order and not order_intent.ready_to_submit and order_intent.next_question:
         return order_intent.next_question

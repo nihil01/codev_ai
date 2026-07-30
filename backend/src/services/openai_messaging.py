@@ -186,27 +186,23 @@ def generate_reply(
         if order_intent:
             full_system_prompt += (
                 "\n\n"
-                "SİFARİŞ NİYYƏTİ BARƏDƏ MƏLUMAT:\n"
-                f"Müştəri sifariş vermək istəyir: {order_intent.wants_order}\n"
-                f"Sifariş menecerə ötürülməyə hazırdır: {order_intent.ready_to_submit}\n"
+                "KURS MARAĞI BARƏDƏ MƏLUMAT:\n"
+                f"Müştəri kursla maraqlanır: {order_intent.wants_order}\n"
+                f"Müraciət menecerə ötürülməyə hazırdır: {order_intent.ready_to_submit}\n"
                 f"Müştərinin dili: {order_intent.detected_language}\n"
-                f"Məhsul: {order_intent.product_title}\n"
-                f"Qiymət: {order_intent.product_price}\n"
-                f"Miqdar: {order_intent.quantity}\n"
-                f"Müştərinin adı: {order_intent.customer_name}\n"
-                f"Müştərinin telefonu: {order_intent.customer_phone}\n"
-                f"Çatdırılma lazımdır: {order_intent.delivery_required}\n"
-                f"Çatdırılma ünvanı: {order_intent.delivery_address}\n"
-                f"Çatdırılma vaxtı: {order_intent.delivery_time}\n"
-                f"Şərh: {order_intent.comment}\n"
+                f"Maraqlandığı kurs: {order_intent.product_title}\n"
+                f"Kursun qiyməti: {order_intent.product_price}\n"
+                f"Müştərinin adı (mövcuddursa): {order_intent.customer_name}\n"
+                f"Müştərinin telefonu (mövcuddursa): {order_intent.customer_phone}\n"
+                f"Qeyd: {order_intent.comment}\n"
                 f"Çatışmayan sahələr: {', '.join(order_intent.missing_fields) if order_intent.missing_fields else 'yoxdur'}\n"
                 f"Müştəriyə növbəti sual: {order_intent.next_question}\n\n"
-                "Sifarişlə işləmə qaydaları:\n"
-                "1. Müştəri sifariş vermək istəyirsə, lakin məlumat çatışmırsa, yalnız lazım olan dəqiqləşdirici sualı ver.\n"
-                "2. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
-                "3. Sifariş menecerə ötürülməyə hazırdırsa, sifarişin qəbul edildiyini və menecerin tezliklə əlaqə saxlayacağını bildir.\n"
-                "4. Yalnız Azərbaycan dilində cavab ver.\n"
-                "5. Ad, telefon, ünvan, qiymət və ya məhsul barədə məlumat uydurma.\n"
+                "Kurs müraciəti ilə işləmə qaydaları:\n"
+                "1. Konkret kurs məlum deyilsə, yalnız hansı kursun maraqlandırdığını soruş.\n"
+                "2. Say, çatdırılma, ünvan, ad və telefon soruşma.\n"
+                "3. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
+                "4. Müraciət hazırdırsa, məlumatın menecerə ötürüldüyünü və tezliklə əlaqə saxlanacağını bildir.\n"
+                "5. Yalnız Azərbaycan dilində cavab ver və kurs barədə fakt uydurma.\n"
             )
 
         messages: list[dict[str, str]] = [
@@ -261,19 +257,27 @@ def build_history_text(history: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _course_interest_question(language: str | None) -> str:
+    normalized = (language or "").strip().lower()
+    if normalized.startswith("ru") or "russian" in normalized:
+        return "Какой курс вас интересует?"
+    if normalized.startswith("en") or "english" in normalized:
+        return "Which course are you interested in?"
+    return "Hansı kursla maraqlanırsınız?"
+
+
 def hydrate_order_intent_customer_fields(
     order_intent: OrderIntent,
     *,
     customer_name: str | None = None,
     customer_phone: str | None = None,
 ) -> OrderIntent:
-    """Fill reliable CRM-known customer fields before deciding whether an order is ready.
+    """Normalize a legacy order-intent payload into a course lead.
 
-    The extractor intentionally does not invent missing data from old chat history. For
-    WhatsApp/Zernio, however, the platform already gives us stable customer phone/name.
-    Without this hydration, repeat customers can say "order 10" and the generic reply
-    model may confirm the order while the durable order path is skipped as "missing
-    phone/name".
+    Platform identity is sufficient to contact the lead. Name and phone are useful
+    metadata but are never required. The only required lead field is the course.
+    Legacy commerce fields are explicitly cleared so downstream code cannot revive
+    quantity or delivery questions from an inconsistent model response.
     """
     if not order_intent.wants_order:
         return order_intent
@@ -284,22 +288,20 @@ def hydrate_order_intent_customer_fields(
     if not data.get("customer_phone") and customer_phone:
         data["customer_phone"] = customer_phone
 
-    missing = set(data.get("missing_fields") or [])
-    if data.get("customer_name"):
-        missing.discard("customer_name")
-    if data.get("customer_phone"):
-        missing.discard("customer_phone")
-    if data.get("product_title"):
-        missing.discard("product_title")
-    if data.get("delivery_required") is not True or data.get("delivery_address"):
-        missing.discard("delivery_address")
+    data["quantity"] = None
+    data["delivery_required"] = None
+    data["delivery_address"] = None
+    data["delivery_time"] = None
 
-    required_present = bool(data.get("product_title") and data.get("customer_name") and data.get("customer_phone"))
-    delivery_ready = data.get("delivery_required") is not True or bool(data.get("delivery_address"))
-    data["missing_fields"] = sorted(missing)
-    data["ready_to_submit"] = bool(required_present and delivery_ready and not missing)
-    if data["ready_to_submit"]:
+    if data.get("product_title"):
+        data["missing_fields"] = []
+        data["ready_to_submit"] = True
         data["next_question"] = None
+    else:
+        data["missing_fields"] = ["product_title"]
+        data["ready_to_submit"] = False
+        data["next_question"] = _course_interest_question(data.get("detected_language"))
+
     return OrderIntent.model_validate(data)
 
 

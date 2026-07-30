@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Settings,
-  ShoppingCart,
+  GraduationCap,
   MessageSquare,
   BookOpen,
   Users,
@@ -91,7 +91,7 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
     const items: NavItem[] = [
       { id: 'overview', label: t('tabs.overview'), icon: <LayoutDashboard size={18} /> },
       { id: 'contacts', label: t('tabs.contacts'), icon: <Users size={18} /> },
-      { id: 'orders', label: t('tabs.orders'), icon: <ShoppingCart size={18} /> },
+      { id: 'orders', label: t('tabs.orders'), icon: <GraduationCap size={18} /> },
       { id: 'comments', label: t('tabs.comments'), icon: <MessageSquare size={18} /> },
       { id: 'instagram', label: t('tabs.instagram'), icon: <InstagramIcon size={18} /> },
       { id: 'whatsapp', label: t('tabs.whatsapp'), icon: <WhatsAppIcon size={18} /> },

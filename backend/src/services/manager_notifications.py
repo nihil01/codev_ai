@@ -23,30 +23,22 @@ def _normalize_channel(value: str) -> ManagerChannel:
 
 
 def build_manager_order_message(order: Mapping[str, Any]) -> str:
+    customer_label = order.get("customer_name") or order.get("customer_phone") or order["customer_id"]
     lines = [
-        "🛒 New order",
-        f"Channel: {order['channel']}",
-        f"Customer ID: {order['customer_id']}",
+        "🎓 Yeni kurs müraciəti",
+        f"Kanal: {order['channel']}",
+        f"Müştəri: {customer_label}",
+        f"Müştəri ID: {order['customer_id']}",
     ]
 
-    if order.get("customer_name"):
-        lines.append(f"Customer name: {order['customer_name']}")
     if order.get("customer_phone"):
-        lines.append(f"Phone: {order['customer_phone']}")
+        lines.append(f"Telefon: {order['customer_phone']}")
     if order.get("product_title"):
-        lines.append(f"Product: {order['product_title']}")
+        lines.append(f"Maraqlandığı kurs: {order['product_title']}")
     if order.get("product_price"):
-        lines.append(f"Price: {order['product_price']}")
-    if order.get("quantity"):
-        lines.append(f"Quantity: {order['quantity']}")
-    if order.get("delivery_required") is not None:
-        lines.append(f"Delivery: {'yes' if order['delivery_required'] else 'no'}")
-    if order.get("delivery_address"):
-        lines.append(f"Address: {order['delivery_address']}")
-    if order.get("delivery_time"):
-        lines.append(f"Time: {order['delivery_time']}")
+        lines.append(f"Kursun qiyməti: {order['product_price']}")
     if order.get("customer_comment"):
-        lines.append(f"Comment: {order['customer_comment']}")
+        lines.append(f"Qeyd: {order['customer_comment']}")
 
     return "\n".join(lines)
 

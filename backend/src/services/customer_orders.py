@@ -27,34 +27,22 @@ def build_order_summary(
     customer_comment: str | None,
 ) -> str:
     lines = [
-        "New order",
+        "New course inquiry",
         f"Channel: {channel}",
         f"Customer ID: {customer_id}",
     ]
 
     if customer_name:
-        lines.append(f"Name: {customer_name}")
+        lines.append(f"Customer: {customer_name}")
 
     if customer_phone:
         lines.append(f"Phone: {customer_phone}")
 
     if product_title:
-        lines.append(f"Product: {product_title}")
+        lines.append(f"Course: {product_title}")
 
     if product_price:
-        lines.append(f"Price: {product_price}")
-
-    if quantity:
-        lines.append(f"Quantity: {quantity}")
-
-    if delivery_required is not None:
-        lines.append(f"Delivery: {'yes' if delivery_required else 'no'}")
-
-    if delivery_address:
-        lines.append(f"Delivery address: {delivery_address}")
-
-    if delivery_time:
-        lines.append(f"Delivery time: {delivery_time}")
+        lines.append(f"Course price: {product_price}")
 
     if customer_comment:
         lines.append(f"Comment: {customer_comment}")

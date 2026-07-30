@@ -1,34 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '../../api';
-import type { CustomerOrder, OrderStatus } from '../../api';
-import { cardClass, inputClass, primaryButtonClass, secondaryButtonClass } from '../../constants/styles';
+import type { CustomerOrder } from '../../api';
+import { cardClass, inputClass, secondaryButtonClass } from '../../constants/styles';
 import { useI18n } from '../../i18n';
 
-const ORDER_STATUSES: Array<'all' | 'paid' | 'cancelled'> = ['all', 'paid', 'cancelled'];
-const PAGE_SIZE = 12;
-
-function money(value: string | number | null | undefined) {
-  const amount = Number(value ?? 0);
-  return `${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'} ₼`;
-}
+const PAGE_SIZE = 15;
 
 function displayDate(value: string | null | undefined) {
   if (!value) return '—';
-  return new Date(value).toLocaleString();
-}
-
-function inferRevenue(order: CustomerOrder) {
-  if (order.revenue_amount) return order.revenue_amount;
-  const parsedPrice = Number(String(order.product_price ?? '').replace(/[^0-9.]/g, ''));
-  const quantity = order.quantity && order.quantity > 0 ? order.quantity : 1;
-  return Number.isFinite(parsedPrice) && parsedPrice > 0 ? (parsedPrice * quantity).toFixed(2) : '';
-}
-
-function statusBadgeClass(status: OrderStatus) {
-  if (status === 'paid' || status === 'completed' || status === 'done') return 'bg-[#e4f5e9] text-[#18261d] ring-[#e4f5e9]';
-  if (status === 'cancelled') return 'bg-rose-50 text-rose-700 ring-rose-100';
-  return 'bg-[#e4f5e9] text-[#18261d] ring-[#e1ebe4]';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
 }
 
 type CustomerOrdersProps = {
@@ -38,253 +20,156 @@ type CustomerOrdersProps = {
   onAnalyticsChange?: () => void | Promise<void>;
 };
 
-export function CustomerOrders({ companyId, setError, setNotice, onAnalyticsChange }: CustomerOrdersProps) {
+export function CustomerOrders({ companyId, setError }: CustomerOrdersProps) {
   const { t } = useI18n();
-  const [orders, setOrders] = useState<CustomerOrder[]>([]);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'cancelled'>('all');
+  const [leads, setLeads] = useState<CustomerOrder[]>([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [edits, setEdits] = useState<Record<string, { revenue_amount: string; cost_amount: string }>>({});
 
-  const visibleOrders = orders.slice(0, PAGE_SIZE);
-
-  const totals = useMemo(() => {
-    return visibleOrders.reduce(
-      (acc, order) => {
-        const isPaid = ['paid', 'completed', 'done'].includes(order.status);
-        if (!isPaid) return acc;
-        acc.revenue += Number(order.revenue_amount ?? 0) || 0;
-        acc.costs += Number(order.cost_amount ?? 0) || 0;
-        acc.profit += Number(order.gross_profit ?? 0) || 0;
-        acc.paid += 1;
-        return acc;
-      },
-      { revenue: 0, costs: 0, profit: 0, paid: 0 },
-    );
-  }, [visibleOrders]);
-
-  async function loadOrders(nextPage = page) {
-    if (!companyId) return;
-    setLoading(true);
-    setError('');
-    try {
-      const data = await api.customerOrders(companyId, {
-        status: statusFilter,
-        from: fromDate || undefined,
-        to: toDate || undefined,
-        limit: PAGE_SIZE + 1,
-        offset: (nextPage - 1) * PAGE_SIZE,
-      });
-      setOrders(data);
-      setHasNextPage(data.length > PAGE_SIZE);
-      setEdits(
-        Object.fromEntries(
-          data.slice(0, PAGE_SIZE).map((order) => [
-            order.id,
-            {
-              revenue_amount: order.revenue_amount ?? inferRevenue(order),
-              cost_amount: order.cost_amount ?? '',
-            },
-          ]),
-        ),
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
+  const visibleLeads = leads.slice(0, PAGE_SIZE);
 
   useEffect(() => {
-    loadOrders(page);
-  }, [companyId, statusFilter, fromDate, toDate, page]);
+    let cancelled = false;
+
+    async function loadLeads() {
+      if (!companyId) return;
+      setLoading(true);
+      setError('');
+      try {
+        const data = await api.customerOrders(companyId, {
+          status: 'all',
+          from: fromDate || undefined,
+          to: toDate || undefined,
+          limit: PAGE_SIZE + 1,
+          offset: (page - 1) * PAGE_SIZE,
+        });
+        if (cancelled) return;
+        setLeads(data);
+        setHasNextPage(data.length > PAGE_SIZE);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadLeads();
+    return () => { cancelled = true; };
+  }, [companyId, fromDate, page, setError, toDate]);
 
   function resetFilters() {
-    setStatusFilter('all');
     setFromDate('');
     setToDate('');
     setPage(1);
   }
 
-  function changeStatusFilter(status: 'all' | 'paid' | 'cancelled') {
-    setStatusFilter(status);
-    setPage(1);
-  }
-
-  async function updateOrder(order: CustomerOrder, status: 'paid' | 'cancelled') {
-    if (!companyId) return;
-    setSavingId(order.id);
-    setError('');
-    setNotice('');
-    const edit = edits[order.id] ?? { revenue_amount: inferRevenue(order), cost_amount: order.cost_amount ?? '' };
-    try {
-      const updated = await api.updateCustomerOrder(companyId, order.id, {
-        status,
-        revenue_amount: edit.revenue_amount || null,
-        cost_amount: edit.cost_amount || null,
-      });
-      setOrders((current) => current.map((item) => item.id === updated.id ? updated : item));
-      setEdits((current) => ({
-        ...current,
-        [updated.id]: {
-          revenue_amount: updated.revenue_amount ?? inferRevenue(updated),
-          cost_amount: updated.cost_amount ?? '',
-        },
-      }));
-      setNotice(t('orders.updated'));
-      await onAnalyticsChange?.();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSavingId(null);
-    }
-  }
-
-  function updateEdit(orderId: string, field: 'revenue_amount' | 'cost_amount', value: string) {
-    setEdits((current) => ({
-      ...current,
-      [orderId]: {
-        revenue_amount: current[orderId]?.revenue_amount ?? '',
-        cost_amount: current[orderId]?.cost_amount ?? '',
-        [field]: value,
-      },
-    }));
-  }
-
   return (
     <section className="space-y-5">
       <div className={cardClass}>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#18261d]">{t('orders.eyebrow')}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#15803d]">{t('orders.eyebrow')}</p>
             <h2 className="mt-2 text-2xl font-light text-[#18261d]">{t('orders.title')}</h2>
-            <p className="mt-2 text-sm text-[#18261d]">Only final statuses are exposed to managers now: paid or cancelled.</p>
+            <p className="mt-2 max-w-2xl text-sm text-[#586b60]">{t('orders.subtitle')}</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-[repeat(2,minmax(150px,1fr))_auto] lg:min-w-[560px]">
+
+          <div className="grid gap-3 sm:grid-cols-[repeat(2,minmax(150px,1fr))_auto] lg:min-w-[560px]">
             <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#18261d]">
-              From
-              <input type="date" className={`${inputClass} mt-2`} value={fromDate} onChange={(event) => { setFromDate(event.target.value); setPage(1); }} />
+              {t('orders.from')}
+              <input
+                type="date"
+                className={`${inputClass} mt-2`}
+                value={fromDate}
+                onChange={(event) => { setFromDate(event.target.value); setPage(1); }}
+              />
             </label>
             <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#18261d]">
-              To
-              <input type="date" className={`${inputClass} mt-2`} value={toDate} onChange={(event) => { setToDate(event.target.value); setPage(1); }} />
+              {t('orders.to')}
+              <input
+                type="date"
+                className={`${inputClass} mt-2`}
+                value={toDate}
+                onChange={(event) => { setToDate(event.target.value); setPage(1); }}
+              />
             </label>
             <div className="flex items-end">
-              <button type="button" onClick={resetFilters} className={secondaryButtonClass}>Reset</button>
+              <button type="button" onClick={resetFilters} className={secondaryButtonClass}>{t('orders.reset')}</button>
             </div>
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {ORDER_STATUSES.map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={statusFilter === status ? primaryButtonClass : secondaryButtonClass}
-              onClick={() => changeStatusFilter(status)}
-            >
-              {t(`orders.status.${status}`)}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-3 md:grid-cols-4">
-          <div className="rounded-[24px] bg-[#e4f5e9] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#18261d]">{t('orders.total')}</p>
-            <p className="mt-2 text-2xl font-semibold text-[#18261d]">{visibleOrders.length}</p>
-          </div>
-          <div className="rounded-[24px] bg-[#e4f5e9] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#18261d]">{t('orders.paid')}</p>
-            <p className="mt-2 text-2xl font-semibold text-[#18261d]">{totals.paid}</p>
-          </div>
-          <div className="rounded-[24px] bg-[#e4f5e9] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#15803d]">{t('orders.revenue')}</p>
-            <p className="mt-2 text-2xl font-semibold text-[#116932]">{money(totals.revenue)}</p>
-          </div>
-          <div className="rounded-[24px] bg-[#e4f5e9] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#18261d]">{t('orders.profit')}</p>
-            <p className="mt-2 text-2xl font-semibold text-[#18261d]">{money(totals.profit)}</p>
-          </div>
+        <div className="mt-5 inline-flex items-center gap-3 rounded-[24px] bg-[#e4f5e9] px-5 py-4">
+          <span className="text-sm font-medium text-[#586b60]">{t('orders.total')}</span>
+          <span className="text-2xl font-semibold text-[#116932]">{visibleLeads.length}</span>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className={`${cardClass} overflow-hidden p-0`}>
         {loading ? (
-          <div className={cardClass}>{t('orders.loading')}</div>
-        ) : visibleOrders.length === 0 ? (
-          <div className={cardClass}>{t('orders.empty')}</div>
-        ) : visibleOrders.map((order) => {
-          const edit = edits[order.id] ?? { revenue_amount: inferRevenue(order), cost_amount: order.cost_amount ?? '' };
-          return (
-            <article key={order.id} className={cardClass}>
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ring-1 ${statusBadgeClass(order.status)}`}>
-                      {t(`orders.status.${order.status}`)}
-                    </span>
-                    <span className="rounded-full bg-[#e4f5e9] px-3 py-1 text-xs font-semibold uppercase text-[#18261d]">
-                      {order.channel}
-                    </span>
-                  </div>
-                  <h3 className="mt-3 text-xl font-light text-[#18261d]">{order.product_title || t('orders.productUnknown')}</h3>
-                  <p className="mt-1 text-sm text-[#18261d]">
-                    {order.customer_name || order.customer_phone || order.customer_id} · {displayDate(order.created_at)}
-                  </p>
-                  <div className="mt-4 grid gap-3 text-sm text-[#18261d] md:grid-cols-2 xl:grid-cols-4">
-                    <div><b>{t('orders.quantity')}:</b> {order.quantity ?? '—'}</div>
-                    <div><b>{t('orders.price')}:</b> {order.product_price || '—'}</div>
-                    <div><b>{t('orders.phone')}:</b> {order.customer_phone || '—'}</div>
-                    <div><b>{t('orders.notified')}:</b> {displayDate(order.manager_notified_at)}</div>
-                  </div>
-                  {order.customer_comment && <p className="mt-3 rounded-[24px] bg-[#e4f5e9] p-3 text-sm text-[#18261d]">{order.customer_comment}</p>}
-                </div>
-
-                <div className="w-full max-w-xl space-y-3 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="text-sm font-semibold text-[#18261d]">
-                      {t('orders.revenue')}
-                      <input
-                        className={`${inputClass} mt-2`}
-                        value={edit.revenue_amount}
-                        onChange={(event) => updateEdit(order.id, 'revenue_amount', event.target.value)}
-                        placeholder="0.00"
-                      />
-                    </label>
-                    <label className="text-sm font-semibold text-[#18261d]">
-                      {t('orders.costs')}
-                      <input
-                        className={`${inputClass} mt-2`}
-                        value={edit.cost_amount}
-                        onChange={(event) => updateEdit(order.id, 'cost_amount', event.target.value)}
-                        placeholder="0.00"
-                      />
-                    </label>
-                  </div>
-                  <p className="text-sm font-semibold text-[#18261d]">{t('orders.currentProfit')}: {money(order.gross_profit)}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button className={primaryButtonClass} disabled={savingId === order.id} onClick={() => updateOrder(order, 'paid')}>{t('orders.markPaid')}</button>
-                    <button className="inline-flex items-center justify-center gap-2 rounded-[24px] border border-[#d8e8dd] bg-[#d8e8dd] px-5 py-3 text-sm font-semibold text-[#116932] transition hover:bg-[#d8e8dd] disabled:opacity-50" disabled={savingId === order.id} onClick={() => updateOrder(order, 'cancelled')}>{t('orders.cancel')}</button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          );
-        })}
+          <div className="p-6 text-sm text-[#586b60]">{t('orders.loading')}</div>
+        ) : visibleLeads.length === 0 ? (
+          <div className="p-6 text-sm text-[#586b60]">{t('orders.empty')}</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse text-left text-sm">
+              <thead className="bg-[#e4f5e9] text-xs font-semibold uppercase tracking-[0.14em] text-[#586b60]">
+                <tr>
+                  <th className="px-5 py-4">{t('orders.customer')}</th>
+                  <th className="px-5 py-4">{t('orders.course')}</th>
+                  <th className="px-5 py-4">{t('orders.price')}</th>
+                  <th className="px-5 py-4">{t('orders.channel')}</th>
+                  <th className="px-5 py-4">{t('orders.date')}</th>
+                  <th className="px-5 py-4">{t('orders.comment')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#e1ebe4] bg-white">
+                {visibleLeads.map((lead) => (
+                  <tr key={lead.id} className="align-top transition-colors hover:bg-[#f7fbf8]">
+                    <td className="px-5 py-4">
+                      <p className="font-semibold text-[#18261d]">{lead.customer_name || lead.customer_phone || lead.customer_id}</p>
+                      {lead.customer_phone && lead.customer_name && (
+                        <p className="mt-1 text-xs text-[#586b60]">{lead.customer_phone}</p>
+                      )}
+                      <p className="mt-1 max-w-[220px] truncate text-xs text-[#708078]">ID: {lead.customer_id}</p>
+                    </td>
+                    <td className="px-5 py-4 font-medium text-[#18261d]">{lead.product_title || t('orders.courseUnknown')}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-[#18261d]">{lead.product_price || '—'}</td>
+                    <td className="px-5 py-4">
+                      <span className="rounded-full bg-[#e4f5e9] px-3 py-1 text-xs font-semibold uppercase text-[#116932]">
+                        {lead.channel}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-4 text-[#586b60]">{displayDate(lead.created_at)}</td>
+                    <td className="max-w-[280px] px-5 py-4 text-[#586b60]">{lead.customer_comment || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-[24px] border border-[#e1ebe4] bg-[#ffffff] p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-[#18261d]">Page {page} · showing {visibleOrders.length} orders</p>
+      <div className="flex flex-col gap-3 rounded-[24px] border border-[#e1ebe4] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-[#586b60]">{t('orders.page')} {page} · {t('orders.shown')} {visibleLeads.length}</p>
         <div className="flex gap-2">
-          <button type="button" className={secondaryButtonClass} disabled={page === 1 || loading} onClick={() => setPage((current) => Math.max(1, current - 1))}>
-            <ChevronLeft size={16} /> Previous
+          <button
+            type="button"
+            className={secondaryButtonClass}
+            disabled={page === 1 || loading}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            <ChevronLeft size={16} /> {t('orders.previous')}
           </button>
-          <button type="button" className={secondaryButtonClass} disabled={!hasNextPage || loading} onClick={() => setPage((current) => current + 1)}>
-            Next <ChevronRight size={16} />
+          <button
+            type="button"
+            className={secondaryButtonClass}
+            disabled={!hasNextPage || loading}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            {t('orders.next')} <ChevronRight size={16} />
           </button>
         </div>
       </div>
