@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     JWT_SECRET: str = os.getenv("JWT_SECRET", "")
 
+    # Meta webhook/OAuth settings stay empty unless the official provider is used.
+    VERIFY_TOKEN: str = os.getenv("VERIFY_TOKEN", "")
+    INSTAGRAM_APP_SECRET: str = os.getenv("INSTAGRAM_APP_SECRET", os.getenv("META_APP_SECRET", ""))
+    meta_app_id: str = os.getenv("META_APP_ID", os.getenv("INSTAGRAM_APP_ID", ""))
+    meta_app_secret: str = os.getenv("META_APP_SECRET", os.getenv("INSTAGRAM_APP_SECRET", ""))
+    meta_api_version: str = os.getenv("META_API_VERSION", "v21.0")
+
     # Codev is a single-owner application. Credentials are provisioned only
     # through the environment and never receive source-controlled defaults.
     single_user_email: str = os.getenv("SINGLE_USER_EMAIL", "")
@@ -24,6 +31,9 @@ class Settings(BaseSettings):
 
     zernio_api_key: str = os.getenv("ZERNIO_API_KEY", os.getenv("ZERNIO_KEY", ""))
     zernio_webhook_secret: str = os.getenv("ZERNIO_WEBHOOK_SEC", "")
+
+    instagram_integration_provider: str = os.getenv("INSTAGRAM_INTEGRATION_PROVIDER", "meta_official")
+    whatsapp_integration_provider: str = os.getenv("WHATSAPP_INTEGRATION_PROVIDER", "meta_official")
 
     database_url: str = os.getenv(
         "DATABASE_URL",

@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.app_config import settings
 from config.deps import get_db
 from services.channel_integrations import get_instagram_provider, get_whatsapp_provider
+from routers.zernio_webhook import handle_zernio_webhook_request
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -30,10 +31,15 @@ async def webhook_wp(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
+    # Older Zernio registrations may still target /webhooks. Dispatch by the
+    # signed provider header instead of treating that payload as Meta Cloud.
+    if request.headers.get("x-zernio-signature"):
+        return await handle_zernio_webhook_request(request, path="", db=db)
+
     body = await request.body()
     signature = request.headers.get("x-hub-signature-256")
 
-    print("New WP event!")
+    logger.info("New WhatsApp Meta webhook event")
 
     provider = get_whatsapp_provider()
 

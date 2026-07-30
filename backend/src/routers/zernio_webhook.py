@@ -124,14 +124,12 @@ def verify_payload(headers, body: bytes) -> bool:
 
     return hmac.compare_digest(signature, expected)
 
-@router.post("/zernio")
-@router.post("/zernio/{path:path}")
-async def zernio_webhook(
+async def handle_zernio_webhook_request(
     request: Request,
-    path: str = "",
-    db: AsyncSession = Depends(get_db),
+    *,
+    path: str,
+    db: AsyncSession,
 ) -> dict[str, Any]:
-
     headers = request.headers
     body = await request.body()
 
@@ -164,3 +162,13 @@ async def zernio_webhook(
         "stored": True,
         **stored,
     }
+
+
+@router.post("/zernio")
+@router.post("/zernio/{path:path}")
+async def zernio_webhook(
+    request: Request,
+    path: str = "",
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    return await handle_zernio_webhook_request(request, path=path, db=db)
