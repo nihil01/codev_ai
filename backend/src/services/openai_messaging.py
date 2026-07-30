@@ -188,6 +188,7 @@ def generate_reply(
                 "\n\n"
                 "KURS MARAĞI BARƏDƏ MƏLUMAT:\n"
                 f"Müştəri kursla maraqlanır: {order_intent.wants_order}\n"
+                f"Müştəriyə kurs seçimi üzrə istiqamət lazımdır: {order_intent.course_guidance_requested}\n"
                 f"Müştəri menecerlə əlaqəyə razıdır: {order_intent.manager_handoff_requested}\n"
                 f"Müraciət menecerə ötürülməyə hazırdır: {order_intent.ready_to_submit}\n"
                 f"Müştərinin dili: {order_intent.detected_language}\n"
@@ -200,15 +201,18 @@ def generate_reply(
                 f"Müştəriyə növbəti sual: {order_intent.next_question}\n\n"
                 "Kurs müraciəti ilə işləmə qaydaları:\n"
                 "1. Müştərinin son sualına əvvəlcə birbaşa və təbii cavab ver; əvvəlki cavabı təkrarlama.\n"
-                "2. Müştəri sadəcə kursun adını yazıbsa, bilik bazasındakı uyğun məlumatı qısa təqdim et və nəyi öyrənmək istədiyini soruş.\n"
-                "3. Proqram, qiymət, qrafik, müddət, format, sayt və digər sualları menecerə yönləndirmədən özün cavablandır.\n"
-                "4. Cavab bilik bazasında yoxdursa, bunu dürüst bildir və yalnız onda menecerin əlaqə saxlamasını istəyib-istəmədiyini soruş.\n"
-                "5. Müştəri qeydiyyata hazırdırsa, fərdi konsultasiya istəyirsə və ya söhbətdə təbii ehtiyac yaranıbsa, "
+                "2. Müştəri mövcud kursları, istiqamətləri və ya seçim üçün kömək istəyirsə, bilik bazasındakı "
+                "kursları sadala, hər biri barədə qısa faydalı məlumat ver və marağına uyğun seçim etməyə kömək et. "
+                "Belə sorğuya yalnız 'Hansı kursla maraqlanırsınız?' sualı ilə cavab vermə.\n"
+                "3. Müştəri sadəcə kursun adını yazıbsa, bilik bazasındakı uyğun məlumatı qısa təqdim et və nəyi öyrənmək istədiyini soruş.\n"
+                "4. Proqram, qiymət, qrafik, müddət, format, sayt və digər sualları menecerə yönləndirmədən özün cavablandır.\n"
+                "5. Cavab bilik bazasında yoxdursa, bunu dürüst bildir və yalnız onda menecerin əlaqə saxlamasını istəyib-istəmədiyini soruş.\n"
+                "6. Müştəri qeydiyyata hazırdırsa, fərdi konsultasiya istəyirsə və ya söhbətdə təbii ehtiyac yaranıbsa, "
                 "menecerin əlaqə saxlamasını təklif et və sual formasında açıq razılıq gözlə.\n"
-                "6. Açıq razılıq olmadan müraciətin menecerə ötürüldüyünü demə. Hər cavabda menecer təklifini təkrarlama.\n"
-                "7. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
-                "8. Say, çatdırılma, ünvan, ad və telefon soruşma.\n"
-                "9. Yalnız Azərbaycan dilində cavab ver və kurs barədə fakt uydurma.\n"
+                "7. Açıq razılıq olmadan müraciətin menecerə ötürüldüyünü demə. Hər cavabda menecer təklifini təkrarlama.\n"
+                "8. next_question doldurulubsa, onu cavabın əsası kimi istifadə et.\n"
+                "9. Say, çatdırılma, ünvan, ad və telefon soruşma.\n"
+                "10. Yalnız Azərbaycan dilində cavab ver və kurs barədə fakt uydurma.\n"
             )
 
         messages: list[dict[str, str]] = [
@@ -263,6 +267,40 @@ def build_history_text(history: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def is_course_guidance_request(user_text: str) -> bool:
+    """Recognize explicit catalog/recommendation requests without relying on the LLM."""
+    text = " ".join((user_text or "").casefold().split())
+    guidance_markers = (
+        "hansı kurs",
+        "hansi kurs",
+        "kurslarınız var",
+        "kurslariniz var",
+        "hansı sah",
+        "hansi sah",
+        "hansı istiqam",
+        "hansi istiqam",
+        "bilmirəm",
+        "bilmirem",
+        "seçimdə kömək",
+        "secimde komek",
+        "seçməyə kömək",
+        "какие курс",
+        "какие направлен",
+        "каким направлениям",
+        "не знаю, какой курс",
+        "не знаю какой курс",
+        "помоги выбрать",
+        "помогите выбрать",
+        "what courses",
+        "which courses",
+        "what do you teach",
+        "help me choose",
+        "don't know which course",
+        "do not know which course",
+    )
+    return any(marker in text for marker in guidance_markers)
+
+
 def _course_interest_question(language: str | None) -> str:
     normalized = (language or "").strip().lower()
     if normalized.startswith("ru") or "russian" in normalized:
@@ -303,6 +341,10 @@ def hydrate_order_intent_customer_fields(
     if data.get("product_title"):
         data["missing_fields"] = []
         data["ready_to_submit"] = bool(data.get("manager_handoff_requested"))
+        data["next_question"] = None
+    elif data.get("course_guidance_requested"):
+        data["missing_fields"] = []
+        data["ready_to_submit"] = False
         data["next_question"] = None
     else:
         data["missing_fields"] = ["product_title"]
@@ -349,12 +391,27 @@ Latest customer message:
 
     raw = response.choices[0].message.content or "{}"
 
+    guidance_requested = is_course_guidance_request(user_text)
+
     try:
         data = json.loads(raw)
-        return OrderIntent.model_validate(data)
+        intent = OrderIntent.model_validate(data)
+        if not guidance_requested:
+            return intent
+
+        guidance_data = intent.model_dump()
+        guidance_data["wants_order"] = True
+        guidance_data["course_guidance_requested"] = True
+        guidance_data["manager_handoff_requested"] = False
+        guidance_data["ready_to_submit"] = False
+        guidance_data["missing_fields"] = []
+        guidance_data["next_question"] = None
+        return OrderIntent.model_validate(guidance_data)
     except (json.JSONDecodeError, ValidationError):
         return OrderIntent(
-            wants_order=False,
+            wants_order=guidance_requested,
+            course_guidance_requested=guidance_requested,
+            manager_handoff_requested=False,
             ready_to_submit=False,
             confidence=0.0,
             missing_fields=[],

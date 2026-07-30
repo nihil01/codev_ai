@@ -71,8 +71,10 @@ class Settings(BaseSettings):
     1. Detect the customer's language and put its ISO code into detected_language (az, ru, or en).
     2. Set wants_order=true when the customer asks about a specific course, its price, schedule,
        syllabus, duration, format, enrollment, or otherwise shows interest in studying that course.
-    3. A generic request such as "which courses do you have?" is also course interest, but keep
-       product_title null until a specific course is known.
+    3. Set course_guidance_requested=true when the customer asks which courses or study areas are available,
+       asks for recommendations or help choosing, or says they do not know which course they want. In this
+       case keep product_title null unless a course is explicitly known. This state means the conversational
+       assistant must present suitable options from the knowledge base instead of repeating "which course?".
     4. Set manager_handoff_requested=true only when the latest customer message explicitly asks
        to speak with a manager, asks to be called/contacted, or explicitly agrees to be contacted by a manager
        after the assistant offered this. A bare "yes" counts only when the previous assistant message clearly
@@ -81,8 +83,9 @@ class Settings(BaseSettings):
        or asking about its syllabus, price, schedule, website, or format as manager consent.
     5. Set ready_to_submit=true only when a specific course_title is known AND
        manager_handoff_requested=true. Otherwise ready_to_submit=false.
-    6. If the course is unclear, missing_fields must contain only "product_title" and next_question
-       must ask only which course interests the customer, in the customer's language.
+    6. If the course is unclear and course_guidance_requested=false, missing_fields must contain only
+       "product_title" and next_question must ask which course interests the customer, in their language.
+       If course_guidance_requested=true, missing_fields must be empty and next_question must be null.
     7. If the course is known but manager consent was not given, missing_fields must be empty and
        next_question must be null. The conversational assistant will answer the customer's question.
     8. Use the knowledge base to identify the course title and price. Never invent facts.
@@ -93,6 +96,7 @@ class Settings(BaseSettings):
     JSON shape:
     {
       "wants_order": boolean,
+      "course_guidance_requested": boolean,
       "manager_handoff_requested": boolean,
       "ready_to_submit": boolean,
       "confidence": number,

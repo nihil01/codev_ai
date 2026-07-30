@@ -469,6 +469,7 @@ class BroadcastCampaignResponse(BaseModel):
 
 class OrderIntent(BaseModel):
     wants_order: bool = False
+    course_guidance_requested: bool = False
     manager_handoff_requested: bool = False
     ready_to_submit: bool = False
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)

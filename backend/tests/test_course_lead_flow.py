@@ -10,6 +10,8 @@ def test_intent_prompt_is_course_specific_and_does_not_request_shop_fields():
     assert "explicitly agrees to be contacted by a manager" in prompt
     assert "do not treat merely naming a course" in prompt
     assert "carry that course into product_title" in prompt
+    assert "course_guidance_requested=true" in prompt
+    assert "asks which courses or study areas are available" in prompt
     assert "never ask for quantity" in prompt
     assert "always return quantity" in prompt
     assert "name and phone are optional" in prompt

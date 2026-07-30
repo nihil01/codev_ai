@@ -1,5 +1,14 @@
+import asyncio
+from types import SimpleNamespace
+
 from models.auxilary_models import OrderIntent
-from services.openai_messaging import build_history_text, hydrate_order_intent_customer_fields
+from services import openai_messaging
+from services.openai_messaging import (
+    build_history_text,
+    detect_order_intent,
+    hydrate_order_intent_customer_fields,
+    is_course_guidance_request,
+)
 
 
 def test_build_history_text_preserves_role_content_history():
@@ -12,6 +21,55 @@ def test_build_history_text_preserves_role_content_history():
         "user: I want the Palo Alto course\n"
         "assistant: Which schedule works for you?"
     )
+
+
+def test_course_guidance_phrases_are_detected_without_llm_guesswork():
+    phrases = [
+        "Hansı kurslarınız var?",
+        "Ümumiyyətlə hansı sahələr üzrə tədris edirsiniz?",
+        "Bilmirəm, seçimdə kömək edin",
+        "Какие направления у вас есть?",
+        "Не знаю, какой курс выбрать",
+        "What courses do you offer?",
+    ]
+
+    assert all(is_course_guidance_request(phrase) for phrase in phrases)
+    assert not is_course_guidance_request("Palo Alto kursunun qiyməti nə qədərdir?")
+
+
+def test_catalog_request_overrides_incorrect_llm_question(monkeypatch):
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=(
+                        '{"wants_order": true, "course_guidance_requested": false, '
+                        '"ready_to_submit": false, "missing_fields": ["product_title"], '
+                        '"next_question": "Hansı kursla maraqlanırsınız?"}'
+                    )
+                )
+            )
+        ]
+    )
+    client = SimpleNamespace(
+        chat=SimpleNamespace(
+            completions=SimpleNamespace(create=lambda **_: response)
+        )
+    )
+    monkeypatch.setattr(openai_messaging, "get_openai_client", lambda: client)
+
+    intent = asyncio.run(
+        detect_order_intent(
+            user_text="Ümumiyyətlə hansı sahələr üzrə tədris edirsiniz?",
+            history=[],
+            knowledge_context="Palo Alto, Python, DevOps",
+        )
+    )
+
+    assert intent.course_guidance_requested is True
+    assert intent.ready_to_submit is False
+    assert intent.missing_fields == []
+    assert intent.next_question is None
 
 
 def test_known_course_continues_with_bot_until_manager_consent():
@@ -52,6 +110,25 @@ def test_explicit_manager_consent_makes_course_lead_ready():
     assert hydrated.manager_handoff_requested is True
     assert hydrated.ready_to_submit is True
     assert hydrated.customer_name == "Aysel"
+    assert hydrated.next_question is None
+
+
+def test_course_catalog_request_is_answered_by_bot_instead_of_repeating_question():
+    course_intent = OrderIntent(
+        wants_order=True,
+        course_guidance_requested=True,
+        ready_to_submit=False,
+        detected_language="az",
+        product_title=None,
+        missing_fields=["product_title"],
+        next_question="Hansı kursla maraqlanırsınız?",
+    )
+
+    hydrated = hydrate_order_intent_customer_fields(course_intent)
+
+    assert hydrated.course_guidance_requested is True
+    assert hydrated.ready_to_submit is False
+    assert hydrated.missing_fields == []
     assert hydrated.next_question is None
 
 
