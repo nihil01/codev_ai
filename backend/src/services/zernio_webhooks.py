@@ -726,7 +726,10 @@ async def fetch_recent_zernio_whatsapp_history(
 
 
 def _extract_zernio_sent_message_id(send_result: Mapping[str, Any]) -> str | None:
-    for key in ("messageId", "message_id", "id", "platformMessageId", "platform_message_id"):
+    # Use the provider/platform id whenever available. Zernio's generic `id` is
+    # an internal record id, while outbound webhooks are deduplicated by
+    # `platformMessageId` (Instagram/WhatsApp message id).
+    for key in ("platformMessageId", "platform_message_id", "messageId", "message_id"):
         value = _string_or_none(send_result.get(key))
         if value:
             return value
@@ -741,8 +744,11 @@ def _extract_zernio_sent_message_id(send_result: Mapping[str, Any]) -> str | Non
     if isinstance(messages, Sequence) and not isinstance(messages, str | bytes | bytearray) and messages:
         first = messages[0]
         if isinstance(first, Mapping):
-            return _extract_zernio_sent_message_id(first)
-    return None
+            nested = _extract_zernio_sent_message_id(first)
+            if nested:
+                return nested
+
+    return _string_or_none(send_result.get("id"))
 
 
 async def send_zernio_inbox_message(

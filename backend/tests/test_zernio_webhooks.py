@@ -49,6 +49,14 @@ def test_extract_zernio_sent_message_id_from_common_shapes():
     assert _extract_zernio_sent_message_id({"messages": [{"id": "m3"}]}) == "m3"
 
 
+def test_extract_sent_message_id_matches_outgoing_webhook_platform_id():
+    payload = load_sample("zernio_instagram_message_outgoing.json")
+    parsed = parse_zernio_message_payload(payload)
+
+    assert parsed is not None
+    assert _extract_zernio_sent_message_id(payload["message"]) == parsed["external_message_id"]
+
+
 def test_whatsapp_message_persist_is_idempotent_by_company_mid():
     source = inspect.getsource(persist_zernio_whatsapp_message)
     assert "on conflict (company_id, whatsapp_mid) where whatsapp_mid is not null" in source
