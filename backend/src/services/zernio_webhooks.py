@@ -1322,6 +1322,7 @@ async def persist_parsed_zernio_comment(
         bool(suggestion), bool(comment_row.get("inserted")), company_id,
     )
 
+    auto_replied = False
     if suggestion and comment_row.get("inserted"):
         auto_reply_on = await is_auto_reply_enabled(db, company_id=company_id)
         logger.info("AUTO-REPLY: auto_reply_enabled=%s for company_id=%s", auto_reply_on, company_id)
@@ -1336,9 +1337,8 @@ async def persist_parsed_zernio_comment(
                 "AUTO-REPLY: sending DM author=%s account=%s post=%s comment=%s",
                 author, zernio_account_id, post_id, comment_id_str,
             )
-            logger.info("AUTO-REPLY: message text=%s", suggestion[:200])
-
             try:
+                from services.leads import upsert_comment_lead
                 from services.zernio_integrator import IntegratorZernio
 
                 zernio = IntegratorZernio()
@@ -1366,7 +1366,15 @@ async def persist_parsed_zernio_comment(
                     ),
                     {"comment_id": comment_row["id"]},
                 )
+                await upsert_comment_lead(
+                    db,
+                    company_id,
+                    external_id=str(parsed["author_id"] or parsed["author_username"] or comment_id_str),
+                    username=str(parsed["author_username"]) if parsed["author_username"] else None,
+                    source_comment_id=uuid.UUID(str(comment_row["id"])),
+                )
                 await db.commit()
+                auto_replied = True
 
                 logger.info(
                     "AUTO-REPLY: SUCCESS comment_id=%s author=%s",
@@ -1393,7 +1401,7 @@ async def persist_parsed_zernio_comment(
         "comment_id": str(comment_row["id"]),
         "message_id": parsed["platform_comment_id"],
         "ai_suggested": bool(suggestion),
-        "auto_replied": bool(suggestion) and comment_row.get("inserted"),
+        "auto_replied": auto_replied,
         "skip_reason": None if bool(comment_row["inserted"]) else "duplicate_comment_updated",
     }
 

@@ -272,8 +272,43 @@ export type Contact = {
   created_at?: string | null;
 };
 
+export type LeadStatus = 'new' | 'interested' | 'contacted' | 'qualified' | 'enrolled' | 'not_interested' | 'lost' | 'archived';
+export type LeadPlatform = 'instagram' | 'facebook' | 'tiktok' | 'whatsapp' | 'manual';
+export type LeadMessage = { id: string; direction: 'inbound' | 'outbound'; text: string; created_at: string };
+export type Lead = {
+  id: string;
+  company_id: string;
+  platform: LeadPlatform;
+  external_id: string;
+  conversation_id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  profile_link?: string | null;
+  interested_in?: string | null;
+  status: LeadStatus;
+  lead_source: string;
+  first_interaction_at?: string | null;
+  last_interaction_at?: string | null;
+  ai_summary?: string | null;
+  tags: string[];
+  notes?: string | null;
+  assigned_to?: string | null;
+  next_follow_up_at?: string | null;
+  source_comment_id?: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  conversation_history?: LeadMessage[];
+};
+export type LeadUpdate = Partial<Pick<Lead, 'first_name' | 'last_name' | 'username' | 'phone' | 'email' | 'profile_link' | 'interested_in' | 'status' | 'lead_source' | 'ai_summary' | 'tags' | 'notes' | 'assigned_to' | 'next_follow_up_at'>>;
+export type LeadFilters = { q?: string; status?: LeadStatus | 'all'; platform?: LeadPlatform | 'all'; interested_in?: string; from_date?: string; to_date?: string };
+
 export type SocialPostDraftCreate = {
   platform: 'instagram' | 'linkedin' | 'tiktok';
+  content_type?: 'feed' | 'story' | 'reel' | 'photo' | 'video';
   title?: string | null;
   caption: string;
   media_urls: string[];
@@ -664,6 +699,41 @@ export const api = {
     const query = params.toString();
     return request<Contact[]>(`/api/tenants/${tenantId}/contacts${query ? `?${query}` : ''}`);
   },
+  leads: (tenantId: string, filters?: LeadFilters, pagination?: { limit?: number; offset?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters?.platform && filters.platform !== 'all') params.set('platform', filters.platform);
+    if (filters?.interested_in) params.set('interested_in', filters.interested_in);
+    if (filters?.from_date) params.set('from_date', filters.from_date);
+    if (filters?.to_date) params.set('to_date', filters.to_date);
+    if (pagination?.limit) params.set('limit', String(pagination.limit));
+    if (pagination?.offset) params.set('offset', String(pagination.offset));
+    const query = params.toString();
+    return request<Lead[]>(`/api/tenants/${tenantId}/leads${query ? `?${query}` : ''}`);
+  },
+  leadProfile: (tenantId: string, leadId: string) => request<Lead>(`/api/tenants/${tenantId}/leads/${leadId}`),
+  updateLead: (tenantId: string, leadId: string, payload: LeadUpdate) =>
+    request<Lead>(`/api/tenants/${tenantId}/leads/${leadId}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  summarizeLead: (tenantId: string, leadId: string) =>
+    request<Lead>(`/api/tenants/${tenantId}/leads/${leadId}/summarize`, { method: 'POST' }),
+  deleteLead: (tenantId: string, leadId: string) =>
+    request<void>(`/api/tenants/${tenantId}/leads/${leadId}`, { method: 'DELETE' }),
+  exportLeads: async (tenantId: string, filters?: LeadFilters) => {
+    const params = new URLSearchParams();
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.status && filters.status !== 'all') params.set('status', filters.status);
+    if (filters?.platform && filters.platform !== 'all') params.set('platform', filters.platform);
+    if (filters?.interested_in) params.set('interested_in', filters.interested_in);
+    if (filters?.from_date) params.set('from_date', filters.from_date);
+    if (filters?.to_date) params.set('to_date', filters.to_date);
+    const token = authToken();
+    const response = await fetch(`${API_BASE}/api/tenants/${tenantId}/leads/export.xlsx?${params.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    return response.blob();
+  },
   socialPostDrafts: (tenantId: string) => request<SocialPostDraft[]>(`/api/tenants/${tenantId}/social-posts`),
   uploadSocialPostMedia: (tenantId: string, file: File) => {
     const formData = new FormData();
@@ -701,9 +771,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  commentPrompt: (tenantId: string) => request<CommentPrompt>(`/api/admin/tenants/${tenantId}/comment-prompt`),
+  commentPrompt: (tenantId: string) => request<CommentPrompt>(`/api/tenants/${tenantId}/comment-prompt`),
   updateCommentPrompt: (tenantId: string, payload: { system_prompt: string; title?: string }) =>
-    request<CommentPrompt>(`/api/admin/tenants/${tenantId}/comment-prompt`, {
+    request<CommentPrompt>(`/api/tenants/${tenantId}/comment-prompt`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),

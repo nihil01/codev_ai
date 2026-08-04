@@ -131,7 +131,8 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
   const [posts, setPosts] = useState<SocialPostDraft[]>([]);
   const [activeTab, setActiveTab] = useState<PostsTab>('active');
   const [loading, setLoading] = useState(false);
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [contentType, setContentType] = useState<'feed' | 'story' | 'reel'>('feed');
   const [manualTitle, setManualTitle] = useState('');
   const [manualCaption, setManualCaption] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram']);
@@ -162,6 +163,12 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
     return () => { cancelled = true; };
   }, [companyId]);
 
+  useEffect(() => {
+    if (contentType !== 'feed' && (selectedPlatforms.length !== 1 || selectedPlatforms[0] !== 'instagram')) {
+      setContentType('feed');
+    }
+  }, [contentType, selectedPlatforms]);
+
   function togglePlatform(platform: Platform) {
     setSelectedPlatforms((current) => current.includes(platform) ? (current.length > 1 ? current.filter((item) => item !== platform) : current) : [...current, platform]);
   }
@@ -169,28 +176,40 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
   async function createDraftsForPlatforms(base: Omit<SocialPostDraftCreate, 'platform'>) {
     if (!companyId) return [];
     const created: SocialPostDraft[] = [];
-    for (const platform of selectedPlatforms) {
-      const draft = await api.createSocialPostDraft(companyId, { ...base, platform });
-      created.push(draft);
-      setPosts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
+    try {
+      for (const platform of selectedPlatforms) {
+        const draft = await api.createSocialPostDraft(companyId, { ...base, platform });
+        created.push(draft);
+        setPosts((current) => [draft, ...current.filter((item) => item.id !== draft.id)]);
+      }
+      return created;
+    } catch (error) {
+      await Promise.allSettled(created.map((draft) => api.deleteSocialPost(companyId, draft.id)));
+      const createdIds = new Set(created.map((draft) => draft.id));
+      setPosts((current) => current.filter((draft) => !createdIds.has(draft.id)));
+      throw error;
     }
-    return created;
   }
 
   async function saveUploadedPost() {
-    if (!companyId || !mediaFile || !manualCaption.trim() || selectedPlatforms.length === 0) return;
+    if (!companyId || mediaFiles.length === 0 || !manualCaption.trim() || selectedPlatforms.length === 0) return;
+    if (contentType !== 'feed' && (selectedPlatforms.length !== 1 || selectedPlatforms[0] !== 'instagram')) return onError?.('Story və Reel yalnız Instagram üçün yaradıla bilər.');
+    if (contentType !== 'feed' && mediaFiles.length !== 1) return onError?.('Instagram Story və Reel üçün yalnız bir media faylı seçin.');
+    if (selectedPlatforms.includes('instagram') && mediaFiles.length > 10) return onError?.('Instagram üçün maksimum 10 media faylı seçilə bilər.');
+    if (selectedPlatforms.includes('tiktok') && mediaFiles.length > 35) return onError?.('TikTok üçün maksimum 35 media faylı seçilə bilər.');
     if (scheduleIsPast) return onError?.(t('posts.pastWarning'));
     setSavingManual(true); onError?.(''); onNotice?.('');
     try {
-      const uploaded = await api.uploadSocialPostMedia(companyId, mediaFile);
+      const uploaded = await Promise.all(mediaFiles.map((file) => api.uploadSocialPostMedia(companyId, file)));
       await createDraftsForPlatforms({
-        title: manualTitle.trim() || mediaFile.name,
+        content_type: contentType,
+        title: manualTitle.trim() || mediaFiles[0].name,
         caption: manualCaption.trim(),
-        media_urls: [uploaded.url],
+        media_urls: uploaded.map((item) => item.url),
         scheduled_for: selectedSchedule,
-        metadata: { source: 'manual_upload', filename: uploaded.filename, content_type: uploaded.content_type },
+        metadata: { source: 'manual_upload', filenames: uploaded.map((item) => item.filename), content_types: uploaded.map((item) => item.content_type) },
       });
-      setMediaFile(null); setManualTitle(''); setManualCaption('');
+      setMediaFiles([]); setContentType('feed'); setManualTitle(''); setManualCaption('');
       onNotice?.(t('posts.uploaded'));
     } catch (err) {
       onError?.(err instanceof Error ? err.message : String(err));
@@ -308,13 +327,18 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
               <div className="flex items-center gap-2 text-lg font-semibold text-[#18261d]"><ImageUp size={20} /> {t('posts.uploadTitle')}</div>
               <div className="mt-4 grid gap-3">
                 <label className="flex cursor-pointer items-center gap-3 rounded-[24px] border border-dashed border-[#e1ebe4] bg-white px-4 py-5 text-sm text-[#708078] transition-colors hover:border-[#15803d] hover:bg-[#e4f5e9]">
-                  <input type="file" accept="image/*,video/*" onChange={(event) => setMediaFile(event.target.files?.[0] ?? null)} className="sr-only" />
+                  <input type="file" accept="image/*,video/*" multiple onChange={(event) => setMediaFiles(Array.from(event.target.files ?? []))} className="sr-only" />
                   <span className="shrink-0 rounded-full bg-[#15803d] px-4 py-2 font-medium text-white">Fayl seç</span>
-                  <span className="min-w-0 truncate">{mediaFile?.name ?? 'Fayl seçilməyib'}</span>
+                  <span className="min-w-0 truncate">{mediaFiles.length ? `${mediaFiles.length} fayl seçilib` : 'Fayl seçilməyib'}</span>
                 </label>
+                <select className={inputClass} value={contentType} onChange={(event) => setContentType(event.target.value as 'feed' | 'story' | 'reel')}>
+                  <option value="feed">Feed / Carousel</option>
+                  <option value="story" disabled={selectedPlatforms.length !== 1 || selectedPlatforms[0] !== 'instagram'}>Instagram Story</option>
+                  <option value="reel" disabled={selectedPlatforms.length !== 1 || selectedPlatforms[0] !== 'instagram'}>Instagram Reel</option>
+                </select>
                 <input className={inputClass} placeholder={t('posts.titlePlaceholder')} value={manualTitle} onChange={(e) => setManualTitle(e.target.value)} />
                 <textarea className={`${inputClass} min-h-[110px] resize-y`} placeholder={t('posts.captionPlaceholder')} value={manualCaption} onChange={(e) => setManualCaption(e.target.value)} />
-                <button type="button" onClick={saveUploadedPost} disabled={savingManual || !mediaFile || !manualCaption.trim() || scheduleIsPast} className={primaryButtonClass}>{savingManual ? t('posts.saving') : t('posts.scheduleMedia')}</button>
+                <button type="button" onClick={saveUploadedPost} disabled={savingManual || mediaFiles.length === 0 || !manualCaption.trim() || scheduleIsPast} className={primaryButtonClass}>{savingManual ? t('posts.saving') : t('posts.scheduleMedia')}</button>
               </div>
             </div>
           </div>

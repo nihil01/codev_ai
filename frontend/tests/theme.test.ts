@@ -45,20 +45,22 @@ test('workspace uses one geometric sans and FeedHive pill/card geometry', () => 
   assert.match(styleConstants, /rounded-full/);
 });
 
-test('workspace uses a top bar rather than the old sidebar', () => {
-  assert.match(shell, /<header/);
-  assert.match(shell, /Workspace navigation/);
-  assert.doesNotMatch(shell, /<motion\.aside|sidebar/i);
+test('workspace uses a responsive left sidebar and mobile drawer', () => {
+  assert.match(shell, /<aside/);
+  assert.match(shell, /aria-label="Əsas naviqasiya"/);
+  assert.match(shell, /lg:hidden/);
+  assert.match(shell, /aria-expanded/);
+  assert.doesNotMatch(shell, /overflow-x-auto/);
 });
 
-test('official Codev logo is used in auth, header, and footer', () => {
+test('official Codev logo is used in auth, sidebar, and mobile header', () => {
   const logoPath = path.join(sourceRoot, 'assets/codev-logo.png');
   assert.equal(fs.existsSync(logoPath), true);
   assert.match(authLayout, /import codevLogo/);
   assert.match(authLayout, /src=\{codevLogo\}/);
   assert.match(shell, /import codevLogo/);
+  assert.match(shell, /<aside[\s\S]*src=\{codevLogo\}/);
   assert.match(shell, /<header[\s\S]*src=\{codevLogo\}/);
-  assert.match(shell, /<footer[\s\S]*src=\{codevLogo\}/);
 });
 
 test('frontend contains no blue-violet theme or ordinary card shadows', () => {

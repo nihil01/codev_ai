@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 MAX_HISTORY_MESSAGES = 10
-MAX_PROMPT_LENGTH = 3000
+MAX_PROMPT_LENGTH = 20000
 
 
 class CompanyRuntime(TypedDict):

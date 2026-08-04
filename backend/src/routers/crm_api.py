@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import tempfile
@@ -8,6 +9,7 @@ from typing import Any, Literal, Mapping, cast
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from sqlalchemy import text, bindparam
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,6 +63,17 @@ from services.knowledge_base import (
     delete_knowledge_entry,
     ensure_company_exists,
     list_knowledge_entries, find_relevant_knowledge_entries, build_knowledge_context,
+)
+from services.leads import (
+    LEAD_PLATFORMS,
+    LEAD_STATUSES,
+    build_leads_workbook,
+    conversation_history as get_lead_conversation_history,
+    delete_lead,
+    get_lead,
+    list_leads,
+    update_lead,
+    upsert_comment_lead,
 )
 from services.object_storage import (
     build_object_key,
@@ -240,6 +253,39 @@ def _comment_status(value: object) -> Literal["new", "suggested", "replied", "ig
     if status not in {"new", "suggested", "replied", "ignored", "converted"}:
         status = "new"
     return cast(Literal["new", "suggested", "replied", "ignored", "converted"], status)
+
+
+def _lead_row(row: Mapping[str, object], history: list[LeadMessageResponse] | None = None) -> LeadResponse | LeadProfileResponse:
+    data = {
+        "id": str(row["id"]),
+        "company_id": str(row["company_id"]),
+        "platform": str(row["platform"]),
+        "external_id": str(row["external_id"]),
+        "conversation_id": str(row["conversation_id"]) if row.get("conversation_id") else None,
+        "first_name": row.get("first_name"),
+        "last_name": row.get("last_name"),
+        "username": row.get("username"),
+        "phone": row.get("phone"),
+        "email": row.get("email"),
+        "profile_link": row.get("profile_link"),
+        "interested_in": row.get("interested_in"),
+        "status": str(row["status"]),
+        "lead_source": str(row["lead_source"]),
+        "first_interaction_at": row.get("first_interaction_at"),
+        "last_interaction_at": row.get("last_interaction_at"),
+        "ai_summary": row.get("ai_summary"),
+        "tags": list(row.get("tags") or []),
+        "notes": row.get("notes"),
+        "assigned_to": row.get("assigned_to"),
+        "next_follow_up_at": row.get("next_follow_up_at"),
+        "source_comment_id": str(row["source_comment_id"]) if row.get("source_comment_id") else None,
+        "metadata": dict(cast(Mapping[str, object], row.get("metadata") or {})),
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+    if history is not None:
+        return LeadProfileResponse(**data, conversation_history=history)
+    return LeadResponse(**data)
 
 
 def _comment_row(row: Mapping[str, object]) -> InstagramCommentResponse:
@@ -493,7 +539,10 @@ async def _instagram_integration_response(
     )
 
 @router.get("/tenants", response_model=list[TenantResponse])
-async def list_tenants(db: AsyncSession = Depends(get_db)) -> list[TenantResponse]:
+async def list_tenants(
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> list[TenantResponse]:
     result = await db.execute(
         text(
             """
@@ -509,9 +558,11 @@ async def list_tenants(db: AsyncSession = Depends(get_db)) -> list[TenantRespons
             from instagram_companies c
             left join company_business_settings bs on bs.company_id = c.id
             left join company_subscriptions cs on cs.company_id = c.id
+            where :is_admin or c.id = :company_id
             order by c.created_at desc nulls last, c.display_name asc nulls last
             """
-        )
+        ),
+        {"is_admin": user.role == "admin", "company_id": user.company_id},
     )
     return [_tenant_row(cast(Mapping[str, object], row)) for row in result.mappings().all()]
 
@@ -553,7 +604,12 @@ async def update_admin_company_subscription(
 
 
 @router.post("/tenants", status_code=201, response_model=TenantResponse)
-async def create_tenant(payload: TenantCreate, db: AsyncSession = Depends(get_db)) -> TenantResponse:
+async def create_tenant(
+    payload: TenantCreate,
+    db: AsyncSession = Depends(get_db),
+    admin: UserClaims = Depends(get_admin_user),
+) -> TenantResponse:
+    _ = admin
     now = _now()
     tenant_id = uuid.uuid4()
     account_id = _slug_to_account_id(payload.slug)
@@ -693,7 +749,15 @@ async def create_tenant(payload: TenantCreate, db: AsyncSession = Depends(get_db
 async def list_channels(
     tenant_id: uuid.UUID | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
 ) -> list[ChannelResponse]:
+    if user.role != "admin":
+        if not user.company_id:
+            raise HTTPException(status_code=403, detail="Company access is not configured")
+        tenant_id = uuid.UUID(user.company_id)
+    elif tenant_id is None:
+        raise HTTPException(status_code=422, detail="tenant_id is required")
+    _assert_company_access(tenant_id, user)
     params: dict[str, object] = {}
     if tenant_id:
         params["tenant_id"] = tenant_id
@@ -711,7 +775,12 @@ async def list_channels(
 
 
 @router.post("/channels", status_code=201, response_model=ChannelResponse)
-async def create_channel(payload: ChannelCreate, db: AsyncSession = Depends(get_db)) -> ChannelResponse:
+async def create_channel(
+    payload: ChannelCreate,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> ChannelResponse:
+    _assert_company_access(payload.tenant_id, user)
     if payload.platform != "instagram":
         raise HTTPException(status_code=400, detail="WhatsApp adapter is not wired in this backend yet")
 
@@ -1978,6 +2047,133 @@ async def add_calendar_event(
     return CalendarEventResponse(**row)
 
 
+@router.get("/tenants/{tenant_id}/leads", response_model=list[LeadResponse])
+async def get_crm_leads(
+    tenant_id: uuid.UUID,
+    q: str | None = Query(default=None, max_length=255),
+    status: str | None = Query(default=None),
+    platform: str | None = Query(default=None),
+    interested_in: str | None = Query(default=None, max_length=255),
+    from_date: datetime | None = Query(default=None),
+    to_date: datetime | None = Query(default=None),
+    limit: int = Query(default=300, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> list[LeadResponse]:
+    _assert_company_access(tenant_id, user)
+    if status and status not in LEAD_STATUSES:
+        raise HTTPException(status_code=400, detail="Dəstəklənməyən lead statusu")
+    if platform and platform not in LEAD_PLATFORMS:
+        raise HTTPException(status_code=400, detail="Dəstəklənməyən lead platforması")
+    rows = await list_leads(
+        db, tenant_id, q=q, status=status, platform=platform,
+        interested_in=interested_in, from_date=from_date, to_date=to_date,
+        limit=limit, offset=offset,
+    )
+    return [cast(LeadResponse, _lead_row(row)) for row in rows]
+
+
+@router.get("/tenants/{tenant_id}/leads/export.xlsx")
+async def export_crm_leads(
+    tenant_id: uuid.UUID,
+    q: str | None = Query(default=None, max_length=255),
+    status: str | None = Query(default=None),
+    platform: str | None = Query(default=None),
+    interested_in: str | None = Query(default=None, max_length=255),
+    from_date: datetime | None = Query(default=None),
+    to_date: datetime | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> Response:
+    _assert_company_access(tenant_id, user)
+    if status and status not in LEAD_STATUSES:
+        raise HTTPException(status_code=400, detail="Dəstəklənməyən lead statusu")
+    if platform and platform not in LEAD_PLATFORMS:
+        raise HTTPException(status_code=400, detail="Dəstəklənməyən lead platforması")
+    rows = await list_leads(
+        db, tenant_id, q=q, status=status, platform=platform,
+        interested_in=interested_in, from_date=from_date, to_date=to_date,
+        limit=10000,
+    )
+    filename = f"codev-leads-{datetime.now(BAKU_TIMEZONE).date().isoformat()}.xlsx"
+    return Response(
+        content=build_leads_workbook(rows),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/tenants/{tenant_id}/leads/{lead_id}", response_model=LeadProfileResponse)
+async def get_crm_lead_profile(
+    tenant_id: uuid.UUID,
+    lead_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> LeadProfileResponse:
+    _assert_company_access(tenant_id, user)
+    row = await get_lead(db, tenant_id, lead_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Lead tapılmadı")
+    conversation_id = uuid.UUID(str(row["conversation_id"])) if row.get("conversation_id") else None
+    history_rows = await get_lead_conversation_history(db, tenant_id, str(row["platform"]), conversation_id)
+    history = [LeadMessageResponse(**dict(item)) for item in history_rows]
+    return cast(LeadProfileResponse, _lead_row(row, history))
+
+
+@router.post("/tenants/{tenant_id}/leads/{lead_id}/summarize", response_model=LeadResponse)
+async def summarize_crm_lead(
+    tenant_id: uuid.UUID,
+    lead_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> LeadResponse:
+    _assert_company_access(tenant_id, user)
+    row = await get_lead(db, tenant_id, lead_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Lead tapılmadı")
+    conversation_id = uuid.UUID(str(row["conversation_id"])) if row.get("conversation_id") else None
+    history = await get_lead_conversation_history(db, tenant_id, str(row["platform"]), conversation_id)
+    if not history:
+        raise HTTPException(status_code=409, detail="Xülasə üçün yazışma yoxdur")
+    transcript = "\n".join(f"{item['direction']}: {item['text']}" for item in history[-80:])
+    summary = await asyncio.to_thread(
+        generate_reply,
+        "Sən Codev kurs lead-ləri üzrə CRM analitikisən. Dialoqu Azərbaycan dilində 4-7 qısa bəndlə xülasə et: maraqlandığı kurs, səviyyə və məqsəd, suallar və etirazlar, razılaşmalar, çatışmayan məlumat və növbəti addım. Heç bir fakt uydurma.",
+        transcript,
+        [],
+    )
+    updated = await update_lead(db, tenant_id, lead_id, {"ai_summary": summary})
+    return cast(LeadResponse, _lead_row(updated or row))
+
+
+@router.patch("/tenants/{tenant_id}/leads/{lead_id}", response_model=LeadResponse)
+async def update_crm_lead(
+    tenant_id: uuid.UUID,
+    lead_id: uuid.UUID,
+    payload: LeadUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> LeadResponse:
+    _assert_company_access(tenant_id, user)
+    row = await update_lead(db, tenant_id, lead_id, payload.model_dump(exclude_unset=True))
+    if not row:
+        raise HTTPException(status_code=404, detail="Lead tapılmadı")
+    return cast(LeadResponse, _lead_row(row))
+
+
+@router.delete("/tenants/{tenant_id}/leads/{lead_id}", status_code=204)
+async def remove_crm_lead(
+    tenant_id: uuid.UUID,
+    lead_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> None:
+    _assert_company_access(tenant_id, user)
+    if not await delete_lead(db, tenant_id, lead_id):
+        raise HTTPException(status_code=404, detail="Lead tapılmadı")
+
+
 @router.get("/tenants/{tenant_id}/contacts", response_model=list[ContactResponse])
 async def get_contacts(
     tenant_id: uuid.UUID,
@@ -2491,6 +2687,33 @@ async def update_comment_prompt_settings(
     return CommentPromptResponse(tenant_id=str(tenant_id), title=title, system_prompt=prompt_text, version=version)
 
 
+@router.get("/tenants/{tenant_id}/comment-prompt", response_model=CommentPromptResponse)
+async def get_company_comment_prompt(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> CommentPromptResponse:
+    _assert_company_access(tenant_id, user)
+    prompt = await get_comment_prompt(db, company_id=tenant_id)
+    return CommentPromptResponse(
+        tenant_id=str(tenant_id),
+        title=str(prompt["title"]),
+        system_prompt=str(prompt["prompt_text"]),
+        version=int(cast(Any, prompt["version"])),
+    )
+
+
+@router.put("/tenants/{tenant_id}/comment-prompt", response_model=CommentPromptResponse)
+async def update_company_comment_prompt(
+    tenant_id: uuid.UUID,
+    payload: CommentPromptUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> CommentPromptResponse:
+    _assert_company_access(tenant_id, user)
+    return await update_comment_prompt_settings(tenant_id, payload, db, user)
+
+
 @router.get("/tenants/{tenant_id}/comments", response_model=list[CommentThreadResponse])
 async def list_instagram_comments(
     tenant_id: uuid.UUID,
@@ -2742,12 +2965,20 @@ async def send_comment_private_reply(
 ):
     _assert_company_access(tenant_id, user)
 
+    # Serialize replies per comment until the external send and local commit complete.
+    # A second request waits here, then observes replied_at and returns 409.
+    await db.execute(
+        text("select pg_advisory_xact_lock(hashtextextended(cast(:comment_id as text), 0))"),
+        {"comment_id": comment_id},
+    )
+
     # Fetch comment details + zernio_account_id
     result = await db.execute(
         text(
             """
             select c.platform_comment_id, c.platform_post_id,
-                   c.zernio_account_id,
+                   c.zernio_account_id, c.author_id, c.author_username,
+                   c.status, c.replied_at, c.received_at,
                    t.zernio_post_id
             from instagram_comments c
             join instagram_comment_threads t on t.id = c.thread_id
@@ -2759,6 +2990,11 @@ async def send_comment_private_reply(
     row = result.mappings().first()
     if not row:
         raise HTTPException(status_code=404, detail="Comment not found")
+    if row.get("replied_at") or str(row.get("status") or "") == "replied":
+        raise HTTPException(status_code=409, detail="Comment already has a private reply")
+    received_at = row.get("received_at")
+    if isinstance(received_at, datetime) and received_at < datetime.now(timezone.utc) - timedelta(days=7):
+        raise HTTPException(status_code=409, detail="Instagram private reply window has expired")
 
     post_id = row["zernio_post_id"] or row["platform_post_id"]
     comment_id_str = row["platform_comment_id"]
@@ -2790,6 +3026,13 @@ async def send_comment_private_reply(
             """
         ),
         {"tenant_id": tenant_id, "comment_id": comment_id},
+    )
+    await upsert_comment_lead(
+        db,
+        tenant_id,
+        external_id=str(row.get("author_id") or row.get("author_username") or comment_id_str),
+        username=str(row["author_username"]) if row.get("author_username") else None,
+        source_comment_id=comment_id,
     )
     await db.commit()
 
@@ -3121,7 +3364,9 @@ async def list_conversations(
     customer: str | None = Query(default=None, max_length=255),
     channel: Literal["all", "instagram", "whatsapp"] = Query(default="all"),
     db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
 ) -> list[ConversationResponse]:
+    _assert_company_access(tenant_id, user)
     params: dict[str, object] = {
         "tenant_id": tenant_id,
     }

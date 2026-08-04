@@ -312,10 +312,12 @@ async def list_calendar_events(db: AsyncSession, tenant_id: uuid.UUID) -> list[d
 
 
 def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    metadata = row.get("metadata") or {}
     return {
         "id": str(row["id"]),
         "company_id": str(row["company_id"]),
         "platform": str(row["platform"]),
+        "content_type": str(metadata.get("content_type") or "feed"),
         "title": str(row["title"]) if row.get("title") else None,
         "caption": str(row["caption"]),
         "media_urls": row.get("media_urls") or [],
@@ -326,7 +328,7 @@ def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "published_at": row.get("published_at"),
         "last_attempt_at": row.get("last_attempt_at"),
         "error_message": str(row["error_message"]) if row.get("error_message") else None,
-        "metadata": row.get("metadata") or {},
+        "metadata": metadata,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -374,6 +376,16 @@ async def create_social_post_draft(db: AsyncSession, tenant_id: uuid.UUID, paylo
     media_urls = payload.get("media_urls") or []
     if not isinstance(media_urls, list):
         raise ValueError("media_urls must be a list")
+    content_type = str(payload.get("content_type") or "feed").lower()
+    allowed_types = {"instagram": {"feed", "story", "reel"}, "tiktok": {"feed", "photo", "video"}, "linkedin": {"feed"}}
+    if content_type not in allowed_types[platform]:
+        raise ValueError(f"Unsupported {platform} content type")
+    if platform == "instagram" and content_type in {"story", "reel"} and len(media_urls) != 1:
+        raise ValueError(f"Instagram {content_type} requires exactly one media item")
+    if platform == "instagram" and len(media_urls) > 10:
+        raise ValueError("Instagram carousel supports at most 10 media items")
+    if platform == "tiktok" and len(media_urls) > 35:
+        raise ValueError("TikTok photo carousel supports at most 35 media items")
     scheduled_for = _scheduled_for_in_baku(payload.get("scheduled_for"))
     _assert_future_schedule(scheduled_for)
     requested_status = str(payload.get("status") or "").strip().lower()
@@ -399,7 +411,7 @@ async def create_social_post_draft(db: AsyncSession, tenant_id: uuid.UUID, paylo
             "media_urls": json.dumps([str(url).strip() for url in media_urls if str(url).strip()], ensure_ascii=False),
             "scheduled_for": scheduled_for,
             "status": status,
-            "metadata": json.dumps(payload.get("metadata") or {}, ensure_ascii=False),
+            "metadata": json.dumps({**(payload.get("metadata") or {}), "content_type": content_type}, ensure_ascii=False),
         },
     )
     row = result.mappings().one()
@@ -509,7 +521,12 @@ async def publish_social_post_draft(db: AsyncSession, tenant_id: uuid.UUID, draf
         raise ValueError("TikTok autoposting requires at least one public video/photo URL")
 
     media_items = [{"type": _media_type_for_url(str(url)), "url": str(url)} for url in media_urls]
-    platforms = _zernio_platform_payload(platform, zernio_account_id)
+    metadata = row.get("metadata") or {}
+    content_type = str(metadata.get("content_type") or "feed")
+    platform_item: dict[str, Any] = {"platform": platform, "accountId": zernio_account_id}
+    if platform == "instagram" and content_type in {"story", "reel"}:
+        platform_item["platformSpecificData"] = {"contentType": content_type}
+    platforms = [platform_item]
     scheduled_for = row.get("scheduled_for") if not publish_now else None
     tiktok_settings = _default_tiktok_settings() if platform == "tiktok" else None
 

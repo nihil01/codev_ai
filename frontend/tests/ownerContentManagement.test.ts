@@ -6,6 +6,7 @@ const root = new URL('../src/', import.meta.url);
 const posts = readFileSync(new URL('pages/company/PostsSchedulerPanel.tsx', root), 'utf8');
 const api = readFileSync(new URL('api.ts', root), 'utf8');
 const dashboard = readFileSync(new URL('pages/company/CompanyDashboard.tsx', root), 'utf8');
+const socialConnections = readFileSync(new URL('pages/company/SocialConnectionsPage.tsx', root), 'utf8');
 const i18n = readFileSync(new URL('i18n.tsx', root), 'utf8');
 const admin = readFileSync(new URL('pages/admin/AdminPanel.tsx', root), 'utf8');
 
@@ -20,6 +21,7 @@ test('manual post calendar exposes LinkedIn without AI generation', () => {
 test('owner workspace exposes prompt and LinkedIn connection contracts', () => {
   assert.match(api, /\/api\/tenants\/\$\{tenantId\}\/bot-prompt/);
   assert.match(api, /\/api\/tenants\/\$\{tenantId\}\/linkedin/);
-  assert.match(dashboard, /LinkedInSettings/);
+  assert.match(dashboard, /SocialConnectionsPage/);
+  assert.match(socialConnections, /LinkedInSettings/);
   assert.match(dashboard, /BotPromptSettings/);
 });

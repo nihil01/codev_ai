@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 MAX_HISTORY_MESSAGES = 10
-MAX_PROMPT_LENGTH = 3000
+MAX_PROMPT_LENGTH = 20000
 DEFAULT_HANDOFF_KEYWORDS = "оператор, менеджер, человек, manager, human"
 
 
@@ -266,8 +266,65 @@ class ContactResponse(BaseModel):
     created_at: datetime | None = None
 
 
+class LeadUpdate(BaseModel):
+    first_name: str | None = Field(default=None, max_length=255)
+    last_name: str | None = Field(default=None, max_length=255)
+    username: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=64)
+    email: str | None = Field(default=None, max_length=255)
+    profile_link: str | None = Field(default=None, max_length=2000)
+    interested_in: str | None = Field(default=None, max_length=2000)
+    status: Literal["new", "interested", "contacted", "qualified", "enrolled", "not_interested", "lost", "archived"] | None = None
+    lead_source: str | None = Field(default=None, max_length=64)
+    ai_summary: str | None = Field(default=None, max_length=8000)
+    tags: list[str] | None = Field(default=None, max_length=50)
+    notes: str | None = Field(default=None, max_length=8000)
+    assigned_to: str | None = Field(default=None, max_length=255)
+    next_follow_up_at: datetime | None = None
+
+
+class LeadMessageResponse(BaseModel):
+    id: str
+    direction: Literal["inbound", "outbound"]
+    text: str
+    created_at: datetime
+
+
+class LeadResponse(BaseModel):
+    id: str
+    company_id: str
+    platform: Literal["instagram", "facebook", "tiktok", "whatsapp", "manual"]
+    external_id: str
+    conversation_id: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    profile_link: str | None = None
+    interested_in: str | None = None
+    status: Literal["new", "interested", "contacted", "qualified", "enrolled", "not_interested", "lost", "archived"]
+    lead_source: str
+    first_interaction_at: datetime | None = None
+    last_interaction_at: datetime | None = None
+    ai_summary: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    notes: str | None = None
+    assigned_to: str | None = None
+    next_follow_up_at: datetime | None = None
+    source_comment_id: str | None = None
+    metadata: dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+
+
+class LeadProfileResponse(LeadResponse):
+    conversation_history: list[LeadMessageResponse] = Field(default_factory=list)
+
+
 class SocialPostDraftCreate(BaseModel):
     platform: Literal["instagram", "linkedin", "tiktok"] = "instagram"
+    content_type: Literal["feed", "story", "reel", "photo", "video"] = "feed"
     title: str | None = Field(default=None, max_length=255)
     caption: str = Field(min_length=1, max_length=4000)
     media_urls: list[str] = Field(default_factory=list)
@@ -279,6 +336,7 @@ class SocialPostDraftResponse(BaseModel):
     id: str
     company_id: str
     platform: Literal["instagram", "linkedin", "tiktok"]
+    content_type: Literal["feed", "story", "reel", "photo", "video"] = "feed"
     title: str | None = None
     caption: str
     media_urls: list[str]

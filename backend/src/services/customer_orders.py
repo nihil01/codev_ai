@@ -1,12 +1,13 @@
 import json
 import uuid
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from typing import Any, cast
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timezone
+from services.leads import upsert_course_inquiry_lead
 
 
 def now_utc() -> datetime:
@@ -181,9 +182,24 @@ async def create_customer_order(
         },
     )
 
+    row = result.mappings().one()
+
+    lead = await upsert_course_inquiry_lead(
+        db,
+        company_id,
+        channel=channel,
+        customer_id=customer_id,
+        conversation_id=conversation_id,
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        interested_in=product_title,
+    )
+    await db.execute(
+        text("update customer_orders set lead_id = :lead_id where id = :order_id and company_id = :company_id"),
+        {"lead_id": lead["id"], "order_id": row["id"], "company_id": company_id},
+    )
     await db.commit()
 
-    row = result.mappings().one()
     return cast(Mapping[str, Any], row)
 
 
