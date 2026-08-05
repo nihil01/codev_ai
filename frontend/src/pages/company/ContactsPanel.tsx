@@ -253,7 +253,11 @@ export function ContactsPanel({ companyId, onError, onNotice }: ContactsPanelPro
                         </span>
                       )}
                     </span>
-                    <span className="block truncate text-xs text-[#708078]">{lead.phone || lead.email || lead.external_id}</span>
+                    <span className="block truncate text-xs text-[#708078]">
+                      {lead.username && <span className="font-medium text-[#15803d]">@{lead.username}</span>}
+                      {lead.username && (lead.phone || lead.email) && <span className="mx-1">·</span>}
+                      {lead.phone || lead.email || lead.external_id}
+                    </span>
                   </span>
                 </span>
                 <span className="text-sm"><span className="block font-semibold capitalize text-[#18261d]">{lead.platform}</span><span className="text-xs text-[#708078]">{lead.interested_in || 'Maraq qeyd edilməyib'}</span></span>
