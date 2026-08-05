@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowRight, Mail, Lock } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { api } from '../../api';
 import type { CurrentUser } from '../../api';
 import { Alert } from '../../components/ui/Alert';
@@ -54,12 +54,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-7">
+    <form onSubmit={handleLogin} className="space-y-6">
       <div>
-        <h2 className="text-[28px] font-bold tracking-[-0.03em] text-[#18261d]">
+        <h2 className="text-[26px] font-bold tracking-[-0.02em] text-[#18261d]">
           {t('auth.companyLogin')}
         </h2>
-        <p className="mt-2.5 text-sm leading-relaxed text-[#708078]">
+        <p className="mt-2 text-[14px] leading-relaxed text-[#708078]">
           {t('auth.companyFormHint')}
         </p>
       </div>
@@ -67,10 +67,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       {error && <Alert type="error">{error}</Alert>}
 
       <div className="space-y-4">
-        <div className="relative">
-          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca8a2]" size={18} />
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-[#586b60]">Email</label>
           <input
-            className="w-full rounded-2xl border border-[#e1ebe4] bg-[#f8faf9] py-3.5 pl-12 pr-4 text-sm text-[#18261d] outline-none transition-all placeholder:text-[#9ca8a2] focus:border-[#15803d] focus:bg-white focus:ring-2 focus:ring-[#15803d]/10"
+            className="w-full rounded-xl border border-[#e1ebe4] bg-[#f8faf9] px-4 py-3 text-[14px] text-[#18261d] outline-none transition placeholder:text-[#b0beb5] focus:border-[#15803d] focus:bg-white"
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -80,10 +80,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           />
         </div>
 
-        <div className="relative">
-          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca8a2]" size={18} />
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-[#586b60]">{t('auth.password')}</label>
           <input
-            className="w-full rounded-2xl border border-[#e1ebe4] bg-[#f8faf9] py-3.5 pl-12 pr-4 text-sm text-[#18261d] outline-none transition-all placeholder:text-[#9ca8a2] focus:border-[#15803d] focus:bg-white focus:ring-2 focus:ring-[#15803d]/10"
+            className="w-full rounded-xl border border-[#e1ebe4] bg-[#f8faf9] px-4 py-3 text-[14px] text-[#18261d] outline-none transition placeholder:text-[#b0beb5] focus:border-[#15803d] focus:bg-white"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -95,7 +95,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       </div>
 
       <button
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#15803d] to-[#1a9e44] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15803d]/20 transition-all hover:shadow-xl hover:shadow-[#15803d]/25 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#15803d] py-3 text-[14px] font-semibold text-white transition hover:bg-[#12702e] disabled:opacity-50"
         type="submit"
         disabled={loading}
       >

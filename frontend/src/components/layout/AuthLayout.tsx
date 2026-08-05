@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Leaf, MessagesSquare } from 'lucide-react';
 import codevLogo from '../../assets/codev-logo.png';
 import { useI18n } from '../../i18n';
 
@@ -12,72 +11,69 @@ type AuthLayoutProps = {
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   const { t } = useI18n();
-  const features = [
-    { label: t('auth.featuresAi'), icon: MessagesSquare },
-    { label: t('auth.featuresDirect'), icon: BookOpen },
-    { label: t('auth.featuresCrm'), icon: Leaf },
-  ];
 
   return (
-    <main className="min-h-screen bg-[#f3faf5] px-4 py-4 text-[#18261d] sm:px-6 sm:py-6 lg:px-10 lg:py-10">
-      <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-[1200px] gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+    <main className="min-h-screen bg-white text-[#18261d]">
+      <div className="flex min-h-screen">
         {/* Left panel - branding */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex min-h-[460px] flex-col justify-between rounded-[32px] bg-gradient-to-br from-[#e4f5e9] via-[#d4edda] to-[#c8e6cf] p-8 sm:p-10 lg:p-14"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="relative hidden w-[52%] overflow-hidden bg-[#15803d] lg:flex lg:flex-col lg:justify-between"
         >
-          <div>
-            <div className="flex items-center gap-4">
-              <img src={codevLogo} alt="Codev" className="h-auto w-[160px] sm:w-[180px]" />
-              <span className="hidden h-10 w-px bg-[#b8d4bf] sm:block" aria-hidden="true" />
-              <p className="hidden max-w-[140px] text-sm font-medium leading-tight text-[#5a7a62] sm:block">
-                Kurs idarəetmə platforması
-              </p>
-            </div>
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-[0.07]">
+            <div className="absolute -left-20 -top-20 h-[500px] w-[500px] rounded-full border border-white/40" />
+            <div className="absolute -bottom-32 -right-32 h-[600px] w-[600px] rounded-full border border-white/40" />
+            <div className="absolute left-1/3 top-1/4 h-[300px] w-[300px] rounded-full border border-white/30" />
           </div>
 
-          <div className="my-12 max-w-[580px]">
-            <h1 className="text-[38px] font-bold leading-[1.1] tracking-[-0.04em] text-[#18261d] sm:text-[52px] lg:text-[58px]">
+          {/* Content */}
+          <div className="relative z-10 p-12">
+            <img src={codevLogo} alt="Codev" className="h-10 w-auto brightness-0 invert" />
+          </div>
+
+          <div className="relative z-10 px-12 pb-16">
+            <h1 className="text-[52px] font-bold leading-[1.1] tracking-[-0.03em] text-white lg:text-[64px]">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-5 max-w-xl text-[15px] font-light leading-[1.7] text-[#3d5a44]">
+              <p className="mt-5 max-w-md text-[16px] font-light leading-[1.7] text-white/80">
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {features.map(({ label, icon: Icon }, index) => (
-              <motion.div
-                key={label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + index * 0.08 }}
-                className="flex items-center gap-3 rounded-2xl bg-white/80 backdrop-blur-sm px-4 py-3.5 text-sm font-medium text-[#18261d] shadow-sm"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e4f5e9] text-[#15803d]">
-                  <Icon size={16} strokeWidth={1.8} />
-                </div>
-                <span>{label}</span>
-              </motion.div>
-            ))}
+          <div className="relative z-10 px-12 pb-12">
+            <div className="flex items-center gap-6 text-sm text-white/60">
+              <span>© 2026 Codev</span>
+              <span className="h-4 w-px bg-white/20" />
+              <span>Bütün hüquqlar qorunur</span>
+            </div>
           </div>
-        </motion.section>
+        </motion.div>
 
         {/* Right panel - login form */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.08 }}
-          className="flex items-center justify-center rounded-[32px] bg-[#d8e8dd] p-3 sm:p-5 lg:p-6"
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex flex-1 flex-col items-center justify-center px-6 py-12 sm:px-12 lg:px-16"
         >
-          <div className="w-full rounded-[28px] bg-white p-7 shadow-sm sm:p-10 lg:p-12">
+          <div className="w-full max-w-[400px]">
+            {/* Mobile logo */}
+            <div className="mb-10 lg:hidden">
+              <img src={codevLogo} alt="Codev" className="h-9 w-auto" />
+            </div>
+
             {children}
+
+            <p className="mt-8 text-center text-xs text-[#9ca8a2]">
+              © 2026 Codev. Bütün hüquqlar qorunur.
+            </p>
           </div>
-        </motion.section>
+        </motion.div>
       </div>
     </main>
   );
