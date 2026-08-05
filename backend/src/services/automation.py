@@ -311,6 +311,15 @@ async def list_calendar_events(db: AsyncSession, tenant_id: uuid.UUID) -> list[d
     return [calendar_event_row(dict(row)) for row in result.mappings().all()]
 
 
+_VALID_CONTENT_TYPES = {"feed", "story", "reel", "photo", "video"}
+
+
+def _normalize_content_type(value: Any) -> str:
+    if isinstance(value, str) and value in _VALID_CONTENT_TYPES:
+        return value
+    return "feed"
+
+
 def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
     raw_metadata = row.get("metadata")
     if isinstance(raw_metadata, str):
@@ -352,7 +361,7 @@ def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "id": str(row["id"]),
         "company_id": str(row["company_id"]),
         "platform": str(row["platform"]),
-        "content_type": str(metadata.get("content_type") or "feed"),
+        "content_type": _normalize_content_type(metadata.get("content_type") or row.get("content_type")),
         "title": str(row["title"]) if row.get("title") else None,
         "caption": str(row["caption"]),
         "media_urls": media_urls,
