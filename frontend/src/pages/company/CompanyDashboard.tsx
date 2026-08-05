@@ -9,6 +9,10 @@ import {
   Send,
   LayoutDashboard,
   Link2,
+  BarChart3,
+  FileText,
+  Plug,
+  UserCog,
 } from 'lucide-react';
 
 import { DashboardOverview } from '../../components/charts/DashboardCharts';
