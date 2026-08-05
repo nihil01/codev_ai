@@ -1,3 +1,5 @@
+import { readErrorResponse } from './services/httpResponse';
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 export type BusinessType = 'confectionery' | 'flower_shop' | 'cafe_restaurant' | 'other';
@@ -77,6 +79,8 @@ export type CommentPrompt = {
   system_prompt: string;
   version: number;
 };
+
+export type IntentPrompt = AdminBotPrompt;
 
 export type CommentStatus = 'new' | 'suggested' | 'replied' | 'ignored' | 'converted';
 
@@ -299,6 +303,8 @@ export type Lead = {
   next_follow_up_at?: string | null;
   source_comment_id?: string | null;
   metadata: Record<string, unknown>;
+  manually_updated_at?: string | null;
+  manually_updated_by?: string | null;
   created_at: string;
   updated_at: string;
   conversation_history?: LeadMessage[];
@@ -585,28 +591,18 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (!response.ok) {
-    let message = `${response.status} ${response.statusText}`;
-
-    try {
-      const data = await response.json();
-      message = data.detail
-        ? `${response.status} ${typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)}`
-        : JSON.stringify(data);
-    } catch {
-      const text = await response.text();
-      if (text) {
-        message = `${response.status} ${text}`;
-      }
-    }
-
-    throw new Error(message);
+    throw new Error(await readErrorResponse(response));
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const responseText = await response.text();
+  if (!responseText) {
+    return undefined as T;
+  }
+  return JSON.parse(responseText) as Promise<T>;
 }
 
 async function requestForm<T>(path: string, formData: FormData, init?: RequestInit): Promise<T> {
@@ -628,15 +624,7 @@ async function requestForm<T>(path: string, formData: FormData, init?: RequestIn
   });
 
   if (!response.ok) {
-    let message = `${response.status} ${response.statusText}`;
-    try {
-      const data = await response.json();
-      message = data.detail ? `${response.status} ${data.detail}` : JSON.stringify(data);
-    } catch {
-      const text = await response.text();
-      if (text) message = `${response.status} ${text}`;
-    }
-    throw new Error(message);
+    throw new Error(await readErrorResponse(response));
   }
 
   return response.json() as Promise<T>;
@@ -858,6 +846,13 @@ export const api = {
     request<AdminBotPrompt>(`/api/tenants/${tenantId}/bot-prompt`),
   updateBotPrompt: (tenantId: string, payload: { system_prompt: string; title?: string }) =>
     request<AdminBotPrompt>(`/api/tenants/${tenantId}/bot-prompt`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  intentPrompt: (tenantId: string) =>
+    request<IntentPrompt>(`/api/tenants/${tenantId}/intent-prompt`),
+  updateIntentPrompt: (tenantId: string, payload: { system_prompt: string; title?: string }) =>
+    request<IntentPrompt>(`/api/tenants/${tenantId}/intent-prompt`, {
       method: 'PUT',
       body: JSON.stringify(payload),
     }),

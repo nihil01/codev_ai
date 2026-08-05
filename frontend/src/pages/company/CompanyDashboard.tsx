@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Settings,
-  GraduationCap,
   MessageSquare,
   BookOpen,
   Users,
@@ -21,8 +20,7 @@ import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
 import { useCompany } from '../../hooks/useCompany';
 import { ChatExplorer } from './ChatExplorer';
-import { ContactsPanel } from './ContactsPanel';
-import { CustomerOrders } from './CustomerOrders';
+import { ContactsWorkspace } from './ContactsWorkspace';
 import { CompanyInfo } from './CompanyInfo';
 import { BotPromptSettings } from './BotPromptSettings';
 import { InstagramComments } from './InstagramComments';
@@ -41,7 +39,7 @@ type CompanyDashboardProps = {
   onLogout: () => void;
 };
 
-type CompanySection = 'overview' | 'contacts' | 'orders' | 'comments' | 'integrations' | 'posts' | 'knowledge' | 'managers' | 'conversations' | 'settings';
+type CompanySection = 'overview' | 'contacts' | 'comments' | 'integrations' | 'posts' | 'knowledge' | 'managers' | 'conversations' | 'settings';
 
 export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashboardProps) {
   const { t } = useI18n();
@@ -90,7 +88,6 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
     const items: NavItem[] = [
       { id: 'overview', label: t('tabs.overview'), icon: <LayoutDashboard size={18} /> },
       { id: 'contacts', label: t('tabs.contacts'), icon: <Users size={18} /> },
-      { id: 'orders', label: t('tabs.orders'), icon: <GraduationCap size={18} /> },
       { id: 'comments', label: t('tabs.comments'), icon: <MessageSquare size={18} /> },
       { id: 'integrations', label: 'Bağlantılar', icon: <Link2 size={18} /> },
       { id: 'posts', label: t('tabs.posts'), icon: <Send size={18} /> },
@@ -278,10 +275,15 @@ export function CompanyDashboard({ user, onUserChange, onLogout }: CompanyDashbo
           />
         );
       case 'contacts':
-        return <ContactsPanel companyId={companyId} onError={setError} onNotice={setNotice} />;
+        return (
+          <ContactsWorkspace
+            companyId={companyId}
+            onError={setError}
+            onNotice={setNotice}
+            onAnalyticsChange={refreshBusinessAnalytics}
+          />
+        );
 
-      case 'orders':
-        return <CustomerOrders companyId={companyId} setError={setError} setNotice={setNotice} onAnalyticsChange={refreshBusinessAnalytics} />;
       case 'comments':
         return <InstagramComments companyId={companyId} setError={setError} setNotice={setNotice} />;
       case 'integrations':

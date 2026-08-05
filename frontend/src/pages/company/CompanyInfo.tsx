@@ -80,14 +80,14 @@ export function CompanyInfo({
             <div>
               <h1 className="text-xl font-light text-[#18261d]">{t('companyInfo.title')}</h1>
               <p className="mt-1 text-sm text-[#18261d]">
-                Управляйте профилем компании и безопасностью аккаунта.
+                Şirkət profilini və hesab təhlükəsizliyini idarə edin.
               </p>
             </div>
           </div>
 
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#e4f5e9] bg-[#e4f5e9] px-3 py-1.5 text-xs font-semibold text-[#18261d] sm:self-auto">
             <CheckCircle2 size={15} />
-            {companyId ? 'Компания подключена' : 'Компания не выбрана'}
+            {companyId ? 'Şirkət qoşulub' : 'Şirkət seçilməyib'}
           </div>
         </div>
       </motion.div>

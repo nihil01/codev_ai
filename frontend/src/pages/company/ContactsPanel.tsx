@@ -241,7 +241,20 @@ export function ContactsPanel({ companyId, onError, onNotice }: ContactsPanelPro
               <button key={lead.id} type="button" onClick={(event) => { leadTriggerRef.current = event.currentTarget; openLead(lead); }} className="grid w-full gap-3 px-4 py-4 text-left transition hover:bg-[#e4f5e9] sm:grid-cols-[minmax(0,1.5fr)_1fr_1fr_auto] sm:items-center sm:px-6">
                 <span className="flex min-w-0 items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e4f5e9] text-[#15803d]"><UserRound size={19} /></span>
-                  <span className="min-w-0"><span className="block truncate font-semibold text-[#18261d]">{leadName(lead)}</span><span className="block truncate text-xs text-[#708078]">{lead.phone || lead.email || lead.external_id}</span></span>
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="block max-w-full truncate font-semibold text-[#18261d]">{leadName(lead)}</span>
+                      {lead.manually_updated_at && (
+                        <span
+                          className="shrink-0 rounded-full bg-[#fff4d6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8a5a00]"
+                          title={`Əl ilə yenilənib: ${formatDate(lead.manually_updated_at)}${lead.manually_updated_by ? ` · ${lead.manually_updated_by}` : ''}`}
+                        >
+                          Əl ilə yenilənib
+                        </span>
+                      )}
+                    </span>
+                    <span className="block truncate text-xs text-[#708078]">{lead.phone || lead.email || lead.external_id}</span>
+                  </span>
                 </span>
                 <span className="text-sm"><span className="block font-semibold capitalize text-[#18261d]">{lead.platform}</span><span className="text-xs text-[#708078]">{lead.interested_in || 'Maraq qeyd edilməyib'}</span></span>
                 <span><span className="rounded-full bg-[#e4f5e9] px-3 py-1 text-xs font-semibold text-[#15803d]">{statuses.find((item) => item.value === lead.status)?.label}</span></span>

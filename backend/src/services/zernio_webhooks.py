@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.chat_runtime import fetch_recent_chat_history, persist_message
 from services.customer_orders import create_customer_order
 from services.knowledge_base import build_knowledge_context, find_relevant_knowledge_entries
+from services.intent_prompts import get_intent_prompt_text
 from services.manager_notifications import notify_managers_about_order
 from services.openai_messaging import detect_order_intent, generate_reply, hydrate_order_intent_customer_fields
 from services.prompt_defaults import DEFAULT_COMMENT_SYSTEM_PROMPT_AZ, DEFAULT_SYSTEM_PROMPT_AZ
@@ -805,6 +806,7 @@ async def build_zernio_ai_reply(
         user_text=text_message,
         history=history,
         knowledge_context=knowledge_context,
+        system_prompt=await get_intent_prompt_text(db, company_id),
     )
     order_intent = hydrate_order_intent_customer_fields(
         order_intent,

@@ -66,6 +66,20 @@ class CommentPromptResponse(BaseModel):
     version: int
 
 
+class IntentPromptUpdate(BaseModel):
+    system_prompt: NormalizedPrompt
+    title: NormalizedOptionalTitle = None
+
+
+class IntentPromptResponse(BaseModel):
+    tenant_id: str
+    company_name: str
+    username: str | None = None
+    title: str
+    system_prompt: str
+    version: int
+
+
 class InstagramBotStatusUpdate(BaseModel):
     enabled: bool
 
@@ -314,6 +328,8 @@ class LeadResponse(BaseModel):
     next_follow_up_at: datetime | None = None
     source_comment_id: str | None = None
     metadata: dict = Field(default_factory=dict)
+    manually_updated_at: datetime | None = None
+    manually_updated_by: str | None = None
     created_at: datetime
     updated_at: datetime
 

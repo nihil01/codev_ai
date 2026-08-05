@@ -55,7 +55,7 @@ export async function showPwaInstallPrompt(): Promise<
         platform: '',
     }));
 
-    // Один event можно использовать только один раз.
+    // Hər quraşdırma hadisəsindən yalnız bir dəfə istifadə etmək olar.
     deferredPrompt = null;
     notifyInstallStateChanged();
 

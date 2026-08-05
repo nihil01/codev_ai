@@ -270,7 +270,7 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
     } finally { setDeletingPostId(null); }
   }
 
-  if (loading) return <div className={cardClass}><Spinner label="Загружаю посты..." /></div>;
+  if (loading) return <div className={cardClass}><Spinner label="Paylaşımlar yüklənir..." /></div>;
 
   return (
     <section className="space-y-6">

@@ -12,6 +12,7 @@ from services.customer_orders import create_customer_order
 from services.manager_notifications import notify_managers_about_order
 from services.instagram_messaging import send_message
 from services.knowledge_base import build_knowledge_context, find_relevant_knowledge_entries
+from services.intent_prompts import get_intent_prompt_text
 from services.openai_messaging import generate_reply, detect_order_intent, hydrate_order_intent_customer_fields
 from services.voice_transcription import extract_audio_url, is_audio_message_type, transcribe_audio_url
 from services.conversation_control import (
@@ -139,6 +140,7 @@ async def handle_message(
         user_text=text_message,
         history=history,
         knowledge_context=knowledge_context,
+        system_prompt=await get_intent_prompt_text(session, company_id),
     )
     order_intent = hydrate_order_intent_customer_fields(
         order_intent,

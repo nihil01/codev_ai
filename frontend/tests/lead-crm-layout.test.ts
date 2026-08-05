@@ -9,6 +9,7 @@ const api = readFileSync(new URL('api.ts', root), 'utf8');
 const posts = readFileSync(new URL('pages/company/PostsSchedulerPanel.tsx', root), 'utf8');
 const shell = readFileSync(new URL('components/layout/DashboardShell.tsx', root), 'utf8');
 const prompts = readFileSync(new URL('pages/company/BotPromptSettings.tsx', root), 'utf8');
+const contactsWorkspace = readFileSync(new URL('pages/company/ContactsWorkspace.tsx', root), 'utf8');
 
 test('all social networks are composed into one connections page', () => {
   assert.match(dashboard, /integrations/);
@@ -38,6 +39,21 @@ test('post composer supports multiple media and Instagram stories without native
   assert.doesNotMatch(posts, /native.*(?:poll|gift|sticker)/i);
 });
 
+test('contacts and course inquiries share one navigation section', () => {
+  assert.match(dashboard, /ContactsWorkspace/);
+  assert.doesNotMatch(dashboard, /case 'orders'|id: 'orders'/);
+  assert.match(contactsWorkspace, /ContactsPanel/);
+  assert.match(contactsWorkspace, /CustomerOrders/);
+  assert.match(contactsWorkspace, /Kontaktlar/);
+  assert.match(contactsWorkspace, /Kurs müraciətləri/);
+});
+
+test('lead rows show a manual-change marker before opening the profile', () => {
+  assert.match(contacts, /manually_updated_at/);
+  assert.match(contacts, /Əl ilə yenilənib/);
+  assert.match(api, /manually_updated_by/);
+});
+
 test('lead and navigation drawers are accessible and filtered export matches the applied list', () => {
   for (const contract of ['role="dialog"', 'aria-modal="true"', "event.key === 'Escape'", 'data-autofocus']) {
     assert.match(shell, new RegExp(contract));
@@ -50,6 +66,8 @@ test('lead and navigation drawers are accessible and filtered export matches the
 
 test('runtime prompt editors load independently and expose persistent labels', () => {
   assert.match(prompts, /Promise\.allSettled/);
+  assert.match(prompts, /intentPrompt/);
+  assert.match(prompts, /Söhbət intenti promptu/);
   assert.match(prompts, /htmlFor=\{`\$\{kind\}-prompt-title`\}/);
   assert.match(prompts, /onNotice\(''\)/);
 });

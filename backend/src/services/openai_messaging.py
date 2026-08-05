@@ -359,6 +359,7 @@ async def detect_order_intent(
     user_text: str,
     history: list[dict],
     knowledge_context: str,
+    system_prompt: str | None = None,
 ) -> OrderIntent:
     history_text = build_history_text(history)
 
@@ -379,7 +380,7 @@ Latest customer message:
         messages=[
             {
                 "role": "system",
-                "content": settings.order_intent_sys_prompt,
+                "content": (system_prompt or settings.order_intent_sys_prompt).strip(),
             },
             {
                 "role": "user",

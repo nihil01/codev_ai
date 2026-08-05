@@ -75,6 +75,7 @@ from services.leads import (
     update_lead,
     upsert_comment_lead,
 )
+from services.intent_prompts import load_intent_prompt, upsert_intent_prompt
 from services.object_storage import (
     build_object_key,
     config_from_settings,
@@ -280,6 +281,8 @@ def _lead_row(row: Mapping[str, object], history: list[LeadMessageResponse] | No
         "next_follow_up_at": row.get("next_follow_up_at"),
         "source_comment_id": str(row["source_comment_id"]) if row.get("source_comment_id") else None,
         "metadata": dict(cast(Mapping[str, object], row.get("metadata") or {})),
+        "manually_updated_at": row.get("manually_updated_at"),
+        "manually_updated_by": row.get("manually_updated_by"),
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -1773,6 +1776,82 @@ async def update_admin_bot_prompt(
     return await _upsert_admin_bot_prompt(db, tenant_id, payload)
 
 
+def _intent_prompt_response(row: Mapping[str, object]) -> IntentPromptResponse:
+    return IntentPromptResponse(
+        tenant_id=str(row["company_id"]),
+        company_name=str(row.get("display_name") or row.get("username") or row["company_id"]),
+        username=str(row["username"]) if row.get("username") else None,
+        title=str(row["title"]),
+        system_prompt=str(row["prompt_text"]),
+        version=int(cast(Any, row["version"])),
+    )
+
+
+async def _load_intent_prompt_response(db: AsyncSession, tenant_id: uuid.UUID) -> IntentPromptResponse:
+    row = await load_intent_prompt(db, tenant_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Şirkət tapılmadı")
+    return _intent_prompt_response(row)
+
+
+async def _save_intent_prompt_response(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    payload: IntentPromptUpdate,
+) -> IntentPromptResponse:
+    row = await upsert_intent_prompt(
+        db,
+        tenant_id,
+        title=payload.title,
+        prompt_text=payload.system_prompt,
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Şirkət tapılmadı")
+    return _intent_prompt_response(row)
+
+
+@router.get("/tenants/{tenant_id}/intent-prompt", response_model=IntentPromptResponse)
+async def get_company_intent_prompt(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> IntentPromptResponse:
+    _assert_company_access(tenant_id, user)
+    return await _load_intent_prompt_response(db, tenant_id)
+
+
+@router.put("/tenants/{tenant_id}/intent-prompt", response_model=IntentPromptResponse)
+async def update_company_intent_prompt(
+    tenant_id: uuid.UUID,
+    payload: IntentPromptUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: UserClaims = Depends(get_current_user),
+) -> IntentPromptResponse:
+    _assert_company_access(tenant_id, user)
+    return await _save_intent_prompt_response(db, tenant_id, payload)
+
+
+@router.get("/admin/tenants/{tenant_id}/intent-prompt", response_model=IntentPromptResponse)
+async def get_admin_intent_prompt(
+    tenant_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: UserClaims = Depends(get_admin_user),
+) -> IntentPromptResponse:
+    _ = admin
+    return await _load_intent_prompt_response(db, tenant_id)
+
+
+@router.put("/admin/tenants/{tenant_id}/intent-prompt", response_model=IntentPromptResponse)
+async def update_admin_intent_prompt(
+    tenant_id: uuid.UUID,
+    payload: IntentPromptUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin: UserClaims = Depends(get_admin_user),
+) -> IntentPromptResponse:
+    _ = admin
+    return await _save_intent_prompt_response(db, tenant_id, payload)
+
+
 async def _load_admin_bot_prompt(db: AsyncSession, tenant_id: uuid.UUID) -> AdminBotPromptResponse:
     result = await db.execute(
         text(
@@ -2156,7 +2235,13 @@ async def update_crm_lead(
     user: UserClaims = Depends(get_current_user),
 ) -> LeadResponse:
     _assert_company_access(tenant_id, user)
-    row = await update_lead(db, tenant_id, lead_id, payload.model_dump(exclude_unset=True))
+    row = await update_lead(
+        db,
+        tenant_id,
+        lead_id,
+        payload.model_dump(exclude_unset=True),
+        manual_editor=user.email,
+    )
     if not row:
         raise HTTPException(status_code=404, detail="Lead tapılmadı")
     return cast(LeadResponse, _lead_row(row))

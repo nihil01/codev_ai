@@ -248,6 +248,8 @@ async def update_lead(
     company_id: uuid.UUID,
     lead_id: uuid.UUID,
     changes: Mapping[str, object],
+    *,
+    manual_editor: str | None = None,
 ) -> Mapping[str, Any] | None:
     allowed = {
         "first_name", "last_name", "username", "phone", "email", "profile_link",
@@ -260,9 +262,13 @@ async def update_lead(
     if values.get("status") is not None:
         values["status"] = normalize_lead_status(str(values["status"]))
     assignments = ", ".join(f"{key} = :{key}" for key in values)
+    parameters = {**values, "lead_id": lead_id, "company_id": company_id}
+    if manual_editor:
+        assignments += ", manually_updated_at = now(), manually_updated_by = :manual_editor"
+        parameters["manual_editor"] = manual_editor
     result = await db.execute(
         text(f"update crm_leads set {assignments}, updated_at = now() where id = :lead_id and company_id = :company_id and is_deleted = false returning *"),
-        {**values, "lead_id": lead_id, "company_id": company_id},
+        parameters,
     )
     row = result.mappings().first()
     await db.commit()

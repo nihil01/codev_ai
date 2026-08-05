@@ -101,3 +101,15 @@ def test_legacy_tenant_channels_and_conversations_routes_require_auth() -> None:
         start = router.index(f"async def {function_name}")
         block = router[start:start + 900]
         assert "Depends(get_current_user)" in block or "Depends(get_admin_user)" in block
+
+
+def test_manual_lead_edits_are_persisted_as_visible_audit_metadata() -> None:
+    root = Path(__file__).resolve().parents[1]
+    migration = (root / "infra/flyway/sql/V3_38__lead_manual_edit_marker.sql").read_text()
+    lead_service = (root / "src/services/leads.py").read_text()
+    router = (root / "src/routers/crm_api.py").read_text()
+
+    assert "manually_updated_at" in migration
+    assert "manually_updated_by" in migration
+    assert "manual_editor" in lead_service
+    assert "manual_editor=user.email" in router
