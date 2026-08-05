@@ -312,7 +312,42 @@ async def list_calendar_events(db: AsyncSession, tenant_id: uuid.UUID) -> list[d
 
 
 def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
-    metadata = row.get("metadata") or {}
+    raw_metadata = row.get("metadata")
+    if isinstance(raw_metadata, str):
+        import json
+        try:
+            metadata = json.loads(raw_metadata)
+        except (json.JSONDecodeError, TypeError):
+            metadata = {}
+    elif isinstance(raw_metadata, dict):
+        metadata = raw_metadata
+    else:
+        metadata = {}
+
+    raw_media = row.get("media_urls")
+    if isinstance(raw_media, str):
+        import json
+        try:
+            media_urls = json.loads(raw_media)
+        except (json.JSONDecodeError, TypeError):
+            media_urls = []
+    elif isinstance(raw_media, list):
+        media_urls = raw_media
+    else:
+        media_urls = []
+
+    raw_publish = row.get("publish_result")
+    if isinstance(raw_publish, str):
+        import json
+        try:
+            publish_result = json.loads(raw_publish)
+        except (json.JSONDecodeError, TypeError):
+            publish_result = {}
+    elif isinstance(raw_publish, dict):
+        publish_result = raw_publish
+    else:
+        publish_result = {}
+
     return {
         "id": str(row["id"]),
         "company_id": str(row["company_id"]),
@@ -320,11 +355,11 @@ def social_post_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "content_type": str(metadata.get("content_type") or "feed"),
         "title": str(row["title"]) if row.get("title") else None,
         "caption": str(row["caption"]),
-        "media_urls": row.get("media_urls") or [],
+        "media_urls": media_urls,
         "scheduled_for": row.get("scheduled_for"),
         "status": str(row["status"]),
         "zernio_post_id": str(row["zernio_post_id"]) if row.get("zernio_post_id") else None,
-        "publish_result": row.get("publish_result") or {},
+        "publish_result": publish_result,
         "published_at": row.get("published_at"),
         "last_attempt_at": row.get("last_attempt_at"),
         "error_message": str(row["error_message"]) if row.get("error_message") else None,

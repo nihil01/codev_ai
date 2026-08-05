@@ -196,6 +196,9 @@ export function BotPromptSettings({ companyId, onError, onNotice }: BotPromptSet
         onChange={setCommentPrompt}
         onSave={() => void save('comment')}
       />
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        ⚠️ <strong>Xəbərdarlıq:</strong> Söhbət intenti promptu botun davranışını kökündən dəyişə bilər. Dəyişiklik etməzdən əvvəl yaxşı düşünün. Yanlış prompt botun səhv cavab verməsinə səbəb ola bilər.
+      </div>
       <PromptEditor
         kind="intent"
         eyebrow="Dialoq analizi"
