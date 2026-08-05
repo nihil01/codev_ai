@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { ArrowRight, Mail, Lock } from 'lucide-react';
 import { api } from '../../api';
 import type { CurrentUser } from '../../api';
-import { inputClass, primaryButtonClass } from '../../constants/styles';
 import { Alert } from '../../components/ui/Alert';
-import { Field } from '../../components/ui/Field';
 import { Spinner } from '../../components/ui/Spinner';
 import { clearSession, saveCurrentUser, saveSession } from '../../services/session';
 import { navigate } from '../../services/navigation';
@@ -55,45 +54,59 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleLogin} className="space-y-6">
+    <form onSubmit={handleLogin} className="space-y-7">
       <div>
-        <h2 className="text-3xl font-semibold tracking-[-0.03em] text-[#18261d]">
+        <h2 className="text-[28px] font-bold tracking-[-0.03em] text-[#18261d]">
           {t('auth.companyLogin')}
         </h2>
-
-        <p className="mt-2 text-sm leading-6 text-[#708078]">
+        <p className="mt-2.5 text-sm leading-relaxed text-[#708078]">
           {t('auth.companyFormHint')}
         </p>
       </div>
 
       {error && <Alert type="error">{error}</Alert>}
 
-      <Field label="Email">
-        <input
-          className={inputClass}
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="email@example.com"
-          required
-          autoComplete="email"
-        />
-      </Field>
+      <div className="space-y-4">
+        <div className="relative">
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca8a2]" size={18} />
+          <input
+            className="w-full rounded-2xl border border-[#e1ebe4] bg-[#f8faf9] py-3.5 pl-12 pr-4 text-sm text-[#18261d] outline-none transition-all placeholder:text-[#9ca8a2] focus:border-[#15803d] focus:bg-white focus:ring-2 focus:ring-[#15803d]/10"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="email@example.com"
+            required
+            autoComplete="email"
+          />
+        </div>
 
-      <Field label={t('auth.password')}>
-        <input
-          className={inputClass}
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="••••••••"
-          required
-          autoComplete="current-password"
-        />
-      </Field>
+        <div className="relative">
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca8a2]" size={18} />
+          <input
+            className="w-full rounded-2xl border border-[#e1ebe4] bg-[#f8faf9] py-3.5 pl-12 pr-4 text-sm text-[#18261d] outline-none transition-all placeholder:text-[#9ca8a2] focus:border-[#15803d] focus:bg-white focus:ring-2 focus:ring-[#15803d]/10"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
+            required
+            autoComplete="current-password"
+          />
+        </div>
+      </div>
 
-      <button className={`${primaryButtonClass} w-full`} type="submit" disabled={loading}>
-        {loading ? <Spinner label={t('auth.signingIn')} /> : t('auth.signIn')}
+      <button
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#15803d] to-[#1a9e44] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#15803d]/20 transition-all hover:shadow-xl hover:shadow-[#15803d]/25 disabled:opacity-60"
+        type="submit"
+        disabled={loading}
+      >
+        {loading ? (
+          <Spinner label={t('auth.signingIn')} />
+        ) : (
+          <>
+            {t('auth.signIn')}
+            <ArrowRight size={16} />
+          </>
+        )}
       </button>
     </form>
   );

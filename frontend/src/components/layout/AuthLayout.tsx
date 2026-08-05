@@ -19,54 +19,62 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f3faf5] px-4 py-4 text-[#18261d] sm:px-7 sm:py-7 lg:px-[42px] lg:py-[42px]">
-      <div className="mx-auto grid min-h-[calc(100vh-84px)] max-w-[1200px] gap-[14px] lg:grid-cols-[1.05fr_0.95fr]">
+    <main className="min-h-screen bg-[#f3faf5] px-4 py-4 text-[#18261d] sm:px-6 sm:py-6 lg:px-10 lg:py-10">
+      <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-[1200px] gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        {/* Left panel - branding */}
         <motion.section
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="flex min-h-[440px] flex-col justify-between rounded-[24px] bg-[#e4f5e9] p-7 sm:p-[42px] lg:p-14"
+          transition={{ duration: 0.5 }}
+          className="flex min-h-[460px] flex-col justify-between rounded-[32px] bg-gradient-to-br from-[#e4f5e9] via-[#d4edda] to-[#c8e6cf] p-8 sm:p-10 lg:p-14"
         >
-          <div className="flex items-center gap-4">
-            <img src={codevLogo} alt="Codev" className="h-auto w-[168px] sm:w-[190px]" />
-            <span className="hidden h-9 w-px bg-[#cfe4d5] sm:block" aria-hidden="true" />
-            <p className="hidden max-w-40 text-sm font-medium text-[#708078] sm:block">Kurs idarəetmə platforması</p>
+          <div>
+            <div className="flex items-center gap-4">
+              <img src={codevLogo} alt="Codev" className="h-auto w-[160px] sm:w-[180px]" />
+              <span className="hidden h-10 w-px bg-[#b8d4bf] sm:block" aria-hidden="true" />
+              <p className="hidden max-w-[140px] text-sm font-medium leading-tight text-[#5a7a62] sm:block">
+                Kurs idarəetmə platforması
+              </p>
+            </div>
           </div>
 
-          <div className="my-14 max-w-[620px]">
-            <h1 className="text-[42px] font-bold leading-[1.08] tracking-[-0.035em] text-[#18261d] sm:text-[56px] lg:text-[60px]">
+          <div className="my-12 max-w-[580px]">
+            <h1 className="text-[38px] font-bold leading-[1.1] tracking-[-0.04em] text-[#18261d] sm:text-[52px] lg:text-[58px]">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-[21px] max-w-xl text-[15px] font-light leading-7 text-[#18261d]">
+              <p className="mt-5 max-w-xl text-[15px] font-light leading-[1.7] text-[#3d5a44]">
                 {subtitle}
               </p>
             )}
           </div>
 
-          <div className="grid gap-[9px] sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             {features.map(({ label, icon: Icon }, index) => (
               <motion.div
                 key={label}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.14 + index * 0.06 }}
-                className="flex items-center gap-[11px] rounded-[24px] bg-[#ffffff] px-[14px] py-[14px] text-sm font-normal text-[#18261d]"
+                transition={{ delay: 0.2 + index * 0.08 }}
+                className="flex items-center gap-3 rounded-2xl bg-white/80 backdrop-blur-sm px-4 py-3.5 text-sm font-medium text-[#18261d] shadow-sm"
               >
-                <Icon size={17} strokeWidth={1.6} />
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e4f5e9] text-[#15803d]">
+                  <Icon size={16} strokeWidth={1.8} />
+                </div>
                 <span>{label}</span>
               </motion.div>
             ))}
           </div>
         </motion.section>
 
+        {/* Right panel - login form */}
         <motion.section
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.06 }}
-          className="flex items-center rounded-[24px] bg-[#d8e8dd] p-[14px] sm:p-7 lg:p-[42px]"
+          transition={{ duration: 0.5, delay: 0.08 }}
+          className="flex items-center justify-center rounded-[32px] bg-[#d8e8dd] p-3 sm:p-5 lg:p-6"
         >
-          <div className="w-full rounded-[24px] bg-[#ffffff] p-7 sm:p-[42px]">
+          <div className="w-full rounded-[28px] bg-white p-7 shadow-sm sm:p-10 lg:p-12">
             {children}
           </div>
         </motion.section>

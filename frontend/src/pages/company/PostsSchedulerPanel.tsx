@@ -291,33 +291,75 @@ export function PostsSchedulerPanel({ companyId, onError, onNotice }: PostsSched
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[24px] border border-[#e1ebe4] p-4">
+          <div className="rounded-[28px] border border-[#e1ebe4] bg-white p-5 shadow-sm">
+            {/* Month navigation */}
             <div className="flex items-center justify-between">
-              <button type="button" className={secondaryButtonClass} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}>←</button>
+              <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e1ebe4] text-[#18261d] transition hover:bg-[#e4f5e9] hover:border-[#15803d]">←</button>
               <div className="text-center">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#18261d]">{t('posts.scheduleEyebrow')}</p>
-                <h3 className="text-lg font-semibold text-[#18261d]">{new Intl.DateTimeFormat('az-AZ', { month: 'long', year: 'numeric', timeZone: BAKU_TIMEZONE }).format(visibleMonth)}</h3>
-                <p className="mt-1 text-xs text-[#18261d]">{t('posts.scheduleHint')}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#15803d]">{t('posts.scheduleEyebrow')}</p>
+                <h3 className="mt-1 text-xl font-bold text-[#18261d]">{new Intl.DateTimeFormat('az-AZ', { month: 'long', year: 'numeric', timeZone: BAKU_TIMEZONE }).format(visibleMonth)}</h3>
+                <p className="mt-0.5 text-xs text-[#708078]">{t('posts.scheduleHint')}</p>
               </div>
-              <button type="button" className={secondaryButtonClass} onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}>→</button>
+              <button type="button" onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e1ebe4] text-[#18261d] transition hover:bg-[#e4f5e9] hover:border-[#15803d]">→</button>
             </div>
-            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase text-[#18261d]">{['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => <span key={day}>{day}</span>)}</div>
-            <div className="mt-2 grid grid-cols-7 gap-2">
+
+            {/* Day headers */}
+            <div className="mt-5 grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold uppercase tracking-wider text-[#708078]">
+              {['B', 'Ç', 'Ç', 'C', 'C', 'Ş', 'B'].map((day, i) => <span key={i}>{day}</span>)}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="mt-2 grid grid-cols-7 gap-1.5">
               {days.map((day) => {
-                const key = dateKey(day); const active = key === selectedDay; const muted = day.getMonth() !== visibleMonth.getMonth(); const past = key < todayBakuKey();
-                return <button key={key} type="button" disabled={past} onClick={() => setSelectedDay(key)} className={`aspect-square rounded-[24px] border text-sm font-semibold transition ${active ? 'border-transparent bg-gradient-to-r from-[#15803d] to-[#4fbf73] text-white' : 'border-[#e1ebe4] bg-[#ffffff] text-[#18261d] hover:border-[#15803d]'} ${muted ? 'opacity-40' : ''} ${past ? 'cursor-not-allowed opacity-30 hover:border-[#e1ebe4]' : ''}`}>{day.getDate()}</button>;
+                const key = dateKey(day);
+                const active = key === selectedDay;
+                const muted = day.getMonth() !== visibleMonth.getMonth();
+                const past = key < todayBakuKey();
+                const isToday = key === todayBakuKey();
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={past}
+                    onClick={() => setSelectedDay(key)}
+                    className={
+                      active
+                        ? 'aspect-square rounded-xl bg-[#15803d] text-white shadow-md shadow-[#15803d]/25 text-sm font-semibold transition-all'
+                        : isToday
+                          ? 'aspect-square rounded-xl bg-[#e4f5e9] text-[#15803d] font-bold text-sm transition-all'
+                          : `aspect-square rounded-xl text-sm font-semibold text-[#18261d] hover:bg-[#f0f8f2] transition-all ${muted ? 'opacity-30' : ''} ${past ? 'cursor-not-allowed opacity-25 hover:bg-transparent' : ''}`
+                    }
+                  >
+                    {day.getDate()}
+                  </button>
+                );
               })}
             </div>
+
+            {/* Time picker */}
             <Field label={t('posts.timeLabel')}>
-              <div className="mt-4 rounded-[24px] border border-[#e1ebe4] bg-[#e4f5e9] p-3">
+              <div className="mt-5 rounded-2xl border border-[#e1ebe4] bg-[#f8faf9] p-4">
                 <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-[#18261d]" />
-                  <select className={`${inputClass} bg-[#ffffff] font-mono`} value={selectedHour} onChange={(event) => setSelectedTime(`${event.target.value}:${selectedMinute}`)}>{hours24.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
-                  <span className="text-lg font-bold text-[#18261d]">:</span>
-                  <select className={`${inputClass} bg-[#ffffff] font-mono`} value={selectedMinute} onChange={(event) => setSelectedTime(`${selectedHour}:${event.target.value}`)}>{minuteOptions.map((minute) => <option key={minute} value={minute}>{minute}</option>)}</select>
-                  <span className="rounded-full bg-[#ffffff] px-3 py-2 text-xs font-semibold text-[#18261d]">Baku {BAKU_GMT_LABEL}</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e4f5e9] text-[#15803d]">
+                    <Clock size={18} />
+                  </div>
+                  <select className="rounded-xl border border-[#e1ebe4] bg-white px-3 py-2.5 text-sm font-mono text-[#18261d] outline-none focus:border-[#15803d]" value={selectedHour} onChange={(event) => setSelectedTime(`${event.target.value}:${selectedMinute}`)}>
+                    {hours24.map((hour) => <option key={hour} value={hour}>{hour}</option>)}
+                  </select>
+                  <span className="text-xl font-bold text-[#18261d]">:</span>
+                  <select className="rounded-xl border border-[#e1ebe4] bg-white px-3 py-2.5 text-sm font-mono text-[#18261d] outline-none focus:border-[#15803d]" value={selectedMinute} onChange={(event) => setSelectedTime(`${selectedHour}:${event.target.value}`)}>
+                    {minuteOptions.map((minute) => <option key={minute} value={minute}>{minute}</option>)}
+                  </select>
+                  <span className="ml-auto rounded-full border border-[#e1ebe4] bg-white px-3 py-1.5 text-xs font-semibold text-[#708078]">Baku {BAKU_GMT_LABEL}</span>
                 </div>
-                {scheduleIsPast && <p className="mt-2 text-xs font-semibold text-[#116932]">{t('posts.pastWarning')}</p>}
+                {scheduleIsPast && (
+                  <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-[#116932]">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#15803d]" />
+                    {t('posts.pastWarning')}
+                  </p>
+                )}
               </div>
             </Field>
           </div>
