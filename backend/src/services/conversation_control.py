@@ -235,6 +235,7 @@ async def can_bot_reply(
 
 
 async def choose_manager_user(db: AsyncSession, company_id: uuid.UUID) -> uuid.UUID | None:
+    # First try to find a user with Telegram configured
     result = await db.execute(
         text(
             """
@@ -243,7 +244,28 @@ async def choose_manager_user(db: AsyncSession, company_id: uuid.UUID) -> uuid.U
             where instagram_company_id = :company_id
               and role = 'company_user'
               and is_active = true
-            order by telegram_notifications_enabled desc, updated_at desc nulls last, created_at asc
+              and telegram_chat_id is not null
+              and telegram_notifications_enabled = true
+            order by updated_at desc nulls last, created_at asc
+            limit 1
+            """
+        ),
+        {"company_id": company_id},
+    )
+    user_id = result.scalar_one_or_none()
+    if user_id:
+        return cast(uuid.UUID, user_id)
+    
+    # Fallback: any active user (even without Telegram)
+    result = await db.execute(
+        text(
+            """
+            select id
+            from users
+            where instagram_company_id = :company_id
+              and role = 'company_user'
+              and is_active = true
+            order by updated_at desc nulls last, created_at asc
             limit 1
             """
         ),
@@ -274,7 +296,8 @@ async def send_telegram_notification(
     user = user_result.mappings().first()
     chat_id = user.get("telegram_chat_id") if user else None
     if not user or not chat_id or not user.get("telegram_notifications_enabled"):
-        await _log_telegram_notification(db, user_id=user_id, company_id=company_id, channel=channel, conversation_id=conversation_id, notification_type=notification_type, message_text=message_text, status="failed", error_text="Telegram is not connected")
+        error_detail = "user not found" if not user else ("no telegram_chat_id" if not chat_id else "telegram_notifications_enabled=false")
+        await _log_telegram_notification(db, user_id=user_id, company_id=company_id, channel=channel, conversation_id=conversation_id, notification_type=notification_type, message_text=message_text, status="failed", error_text=f"Telegram is not connected: {error_detail}")
         return False
 
     reply_markup = None
