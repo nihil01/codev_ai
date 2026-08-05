@@ -103,6 +103,11 @@ export function SocialConnectionsPage(props: Props) {
   const [tiktokAccount, setTiktokAccount] = useState<{ display_name?: string; connected_at?: string } | null>(null);
   const [connectingTiktok, setConnectingTiktok] = useState(false);
 
+  // WhatsApp state
+  const [wpStatus, setWpStatus] = useState<ConnectionStatus>('loading');
+  const [wpAccount, setWpAccount] = useState<{ phone?: string; name?: string } | null>(null);
+  const [connectingWp, setConnectingWp] = useState(false);
+
   useEffect(() => {
     if (!companyId) return;
     let cancelled = false;
@@ -110,7 +115,8 @@ export function SocialConnectionsPage(props: Props) {
     Promise.allSettled([
       api.linkedinIntegration(companyId),
       api.tiktokIntegration(companyId),
-    ]).then(([linkedinResult, tiktokResult]) => {
+      api.getWhatsAppCloudStatus(companyId),
+    ]).then(([linkedinResult, tiktokResult, wpResult]) => {
       if (cancelled) return;
 
       if (linkedinResult.status === 'fulfilled' && linkedinResult.value) {
@@ -135,6 +141,18 @@ export function SocialConnectionsPage(props: Props) {
         }
       } else {
         setTiktokStatus('disconnected');
+      }
+
+      if (wpResult.status === 'fulfilled' && wpResult.value) {
+        const data = wpResult.value as any;
+        if (data.connected) {
+          setWpStatus('connected');
+          setWpAccount({ phone: data.display_phone_number, name: data.verified_name });
+        } else {
+          setWpStatus('disconnected');
+        }
+      } else {
+        setWpStatus('disconnected');
       }
     });
 
@@ -169,6 +187,37 @@ export function SocialConnectionsPage(props: Props) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setConnectingLinkedin(false);
+    }
+  }
+
+  async function connectWhatsApp() {
+    if (!companyId) return;
+    setConnectingWp(true);
+    setError('');
+    try {
+      const { auth_url } = await api.connectWhatsAppCloud(companyId);
+      if (auth_url) window.open(auth_url, '_blank');
+      setNotice('WhatsApp OAuth açıldı. Qoşulmanı tamamlayın.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setConnectingWp(false);
+    }
+  }
+
+  async function disconnectWhatsApp() {
+    if (!companyId || !window.confirm('WhatsApp qoşulmasını ayırmaq istəyirsiniz?')) return;
+    setConnectingWp(true);
+    setError('');
+    try {
+      await api.disconnectWhatsAppCloud(companyId);
+      setWpStatus('disconnected');
+      setWpAccount(null);
+      setNotice('WhatsApp ayrıldı');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setConnectingWp(false);
     }
   }
 
@@ -207,8 +256,7 @@ export function SocialConnectionsPage(props: Props) {
   const igStatus: ConnectionStatus = props.instagramActivated ? 'connected' : 'loading';
   const igEnabledStatus = props.instagramEnabled ? 'Aktiv' : 'Söndürülüb';
 
-  // WhatsApp status
-  const wpStatus: ConnectionStatus = 'loading'; // Will be updated by WhatsAppSettings
+  // WhatsApp status already defined above
 
   return (
     <section className="space-y-5">
@@ -254,7 +302,20 @@ export function SocialConnectionsPage(props: Props) {
           icon={<WhatsAppIcon size={24} />}
           status={wpStatus}
           description="WhatsApp Cloud API inteqrasiyası"
-        />
+          onConnect={connectWhatsApp}
+          onDisconnect={disconnectWhatsApp}
+          connecting={connectingWp}
+        >
+          {wpAccount && (
+            <div className="rounded-xl border border-[#e1ebe4] bg-[#f8faf9] p-3">
+              <p className="text-xs font-semibold text-[#708078]">Hesab</p>
+              <p className="text-sm font-semibold text-[#18261d]">{wpAccount.name || 'WhatsApp account'}</p>
+              {wpAccount.phone && (
+                <p className="mt-1 text-xs text-[#708078]">Telefon: {wpAccount.phone}</p>
+              )}
+            </div>
+          )}
+        </ConnectionCard>
 
         {/* LinkedIn */}
         <ConnectionCard
